@@ -174,6 +174,7 @@ export async function createVoucher(formData: FormData) {
 export async function updateVoucher(id: number, formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser() // Basic check
+    if (!user) return { error: 'Unauthorized' }
 
     // Validate Owner/Manager role? RLS handles it usually, but let's be safe if needed.
     // For now, rely on RLS update policy.

@@ -8,12 +8,12 @@ export async function requestReset(prevState: any, formData: FormData) {
     const email = formData.get('email') as string
 
     if (!email) {
-        return { error: 'required_field' } // Let UI handle exact text
+        return { error: 'required_field', success: false } // Let UI handle exact text
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-        return { error: 'invalid_email_format' }
+        return { error: 'invalid_email_format', success: false }
     }
 
     // 1. Check if email exists in profiles using Admin Client to bypass RLS
@@ -29,7 +29,7 @@ export async function requestReset(prevState: any, formData: FormData) {
         // Also check if user exists in Auth users primarily?
         // Actually, if profile sync is working, it should be in profiles.
         // If not in profiles, we block.
-        return { error: 'email_not_found' }
+        return { error: 'email_not_found', success: false }
     }
 
     const supabase = await createClient()
@@ -45,8 +45,8 @@ export async function requestReset(prevState: any, formData: FormData) {
     })
 
     if (error) {
-        return { error: error.message }
+        return { error: error.message, success: false }
     }
 
-    return { success: true }
+    return { success: true, error: '' }
 }

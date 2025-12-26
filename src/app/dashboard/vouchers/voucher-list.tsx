@@ -47,7 +47,6 @@ interface VoucherListProps {
     initialVouchers: Voucher[]
     branches: any[]
     dict: any
-    dict: any
     lang: string
     userRole?: string
     userBranchId?: number | null

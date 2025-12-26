@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label"
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 // Initial state
-const initialState: { message?: string; error?: string; success?: boolean } = {
-    message: undefined,
-    error: undefined,
+const initialState: { message: string; error: string; success: boolean } = {
+    message: '',
+    error: '',
     success: false
 }
 

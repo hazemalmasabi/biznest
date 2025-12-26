@@ -139,6 +139,7 @@ export async function createBooking(formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { message: 'Unauthorized' }
+    if (!user) return { message: 'Unauthorized' }
 
     const { data: profile } = await supabase.from('profiles').select('role, branch_id').eq('id', user.id).single()
 
