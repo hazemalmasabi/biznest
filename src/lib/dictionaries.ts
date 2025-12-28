@@ -237,6 +237,8 @@ export const dictionaries = {
                 description: "Manage appointments and reservations.",
                 search_placeholder: "Search by booking no., name or phone",
                 new_booking: "New Booking",
+                start_now: "Start Now",
+                select_time: "Select Time",
                 edit_booking: "Edit Booking",
                 statuses: {
                     scheduled: "Scheduled",
@@ -585,6 +587,8 @@ export const dictionaries = {
                 title: "الحجوزات",
                 search_placeholder: "بحث عن رقم الحجز، الاسم أو الهاتف",
                 new_booking: "حجز جديد",
+                start_now: "ابدأ الآن",
+                select_time: "تحديد وقت",
                 edit_booking: "تعديل حجز",
                 select_customer_first: "اختر الفرع أولاً",
                 select_customer: "اختر العميل",

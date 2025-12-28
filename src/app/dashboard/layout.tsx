@@ -18,18 +18,43 @@ export default async function DashboardLayout({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-
-
-    const { data: membership } = await supabase
-        .from('business_members')
+    // 1. Get Profile to know if Owner or Staff
+    const { data: profile } = await supabase
+        .from('profiles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single()
+
+    // 2. If Owner, Ensure Business Exists
+    // 2. If Owner, Ensure Business Exists
+    if (profile?.role === 'owner') {
+        const { data: membership } = await supabase
+            .from('business_members')
+            .select('business_id')
+            .eq('user_id', user.id)
+            .eq('role', 'owner')
+            .single()
+
+        if (!membership) {
+            redirect('/onboarding')
+        }
+    }
+
+    // 3. Determine Sidebar Role
+    let sidebarRole = profile?.role
+    if (profile?.role !== 'owner') {
+        const { data: membership } = await supabase
+            .from('business_members')
+            .select('role')
+            .eq('user_id', user.id)
+            .single()
+        sidebarRole = membership?.role
+    }
 
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
             <SessionGuard userId={user.id} />
-            <Sidebar dict={dict} lang={lang} role={membership?.role} />
+            <Sidebar dict={dict} lang={lang} role={sidebarRole} />
             <main className="flex-1 overflow-y-auto p-8 relative scroll-smooth">
                 {children}
             </main>

@@ -42,12 +42,17 @@ export async function getServices() {
             status,
             branch_id,
             created_at,
-            branches (name)
+            branches!inner (name, business_id)
         `)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
 
-    if (profile?.role !== 'owner') {
+    if (profile?.role === 'owner') {
+        const { data: membership } = await supabase.from('business_members').select('business_id').eq('user_id', user.id).single()
+        if (membership?.business_id) {
+            query = query.eq('branches.business_id', membership.business_id)
+        }
+    } else {
         if (profile?.branch_id) {
             query = query.eq('branch_id', profile.branch_id)
         } else {

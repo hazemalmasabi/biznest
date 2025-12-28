@@ -37,18 +37,21 @@ export default async function EmployeesPage() {
             role, 
             branch_id,
             phone,
-            branch_id,
-            phone,
             created_at,
-            branches (name)
+            branches!inner (name, business_id)
         `)
         .order('role', { ascending: true })
         .order('created_at', { ascending: false })
         .neq('role', 'owner')
         .eq('is_deleted', false)
 
-    // If not Owner, filter by branch
-    if (userProfile?.role !== 'owner') {
+    // If Owner: Filter by Business. If Employee: Filter by Branch.
+    if (userProfile?.role === 'owner') {
+        const { data: membership } = await supabase.from('business_members').select('business_id').eq('user_id', user.id).single()
+        if (membership?.business_id) {
+            query = query.eq('branches.business_id', membership.business_id)
+        }
+    } else {
         if (userProfile?.branch_id) {
             query = query.eq('branch_id', userProfile.branch_id)
         } else {
@@ -64,13 +67,18 @@ export default async function EmployeesPage() {
     }
 
     // 3. Fetch Branches (For the dialog dropdown)
-    // Same logic: Owner sees all, Manager sees own branch (as only option)
+    // Same logic: Owner sees all IN BUSINESS, Manager sees own branch (as only option)
     let branchQuery = supabase
         .from('branches')
         .select('id, name')
         .eq('is_deleted', false) // Use soft delete filter
 
-    if (userProfile?.role !== 'owner' && userProfile?.branch_id) {
+    if (userProfile?.role === 'owner') {
+        const { data: membership } = await supabase.from('business_members').select('business_id').eq('user_id', user.id).single()
+        if (membership?.business_id) {
+            branchQuery = branchQuery.eq('business_id', membership.business_id)
+        }
+    } else if (userProfile?.branch_id) {
         branchQuery = branchQuery.eq('id', userProfile.branch_id)
     }
 
