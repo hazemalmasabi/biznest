@@ -156,12 +156,21 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
         return format(date, 'dd/MM/yyyy hh:mm a', { locale: lang === 'ar' ? ar : enUS })
     }
 
+    const calculateStat = (status?: string) => {
+        const list = status ? filteredBookings.filter(b => b.status === status) : filteredBookings
+        return {
+            count: list.length,
+            value: list.reduce((sum, b) => sum + (Number(b.price) || 0), 0),
+            remaining: list.reduce((sum, b) => sum + (Number(b.price) - (Number(b.paid_amount) || 0)), 0)
+        }
+    }
+
     const stats = {
-        total: filteredBookings.length,
-        scheduled: filteredBookings.filter(b => b.status === 'scheduled').length,
-        completed: filteredBookings.filter(b => b.status === 'completed').length,
-        cancelled: filteredBookings.filter(b => b.status === 'cancelled').length,
-        no_show: filteredBookings.filter(b => b.status === 'no_show').length,
+        total: calculateStat(),
+        scheduled: calculateStat('scheduled'),
+        completed: calculateStat('completed'),
+        cancelled: calculateStat('cancelled'),
+        no_show: calculateStat('no_show'),
     }
 
     return (
@@ -177,31 +186,91 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                 <Card>
                     <CardContent className="p-4 flex flex-col items-center justify-center">
                         <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.total_bookings}</p>
-                        <p className="text-2xl font-bold">{stats.total}</p>
+                        <p className="text-2xl font-bold mb-2">{stats.total.count}</p>
+                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                <span className="font-medium text-foreground">{stats.total.value.toLocaleString('en-US')}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                <span className={`font-medium ${stats.total.remaining > 0 ? 'text-red-600' : stats.total.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                    {stats.total.remaining.toLocaleString('en-US')}
+                                </span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-blue-500">
                         <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.scheduled}</p>
-                        <p className="text-2xl font-bold text-blue-600">{stats.scheduled}</p>
+                        <p className="text-2xl font-bold text-blue-600 mb-2">{stats.scheduled.count}</p>
+                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                <span className="font-medium text-foreground">{stats.scheduled.value.toLocaleString('en-US')}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                <span className={`font-medium ${stats.scheduled.remaining > 0 ? 'text-red-600' : stats.scheduled.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                    {stats.scheduled.remaining.toLocaleString('en-US')}
+                                </span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-green-500">
                         <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.completed}</p>
-                        <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                        <p className="text-2xl font-bold text-green-600 mb-2">{stats.completed.count}</p>
+                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                <span className="font-medium text-foreground">{stats.completed.value.toLocaleString('en-US')}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                <span className={`font-medium ${stats.completed.remaining > 0 ? 'text-red-600' : stats.completed.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                    {stats.completed.remaining.toLocaleString('en-US')}
+                                </span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-red-500">
                         <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.cancelled}</p>
-                        <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+                        <p className="text-2xl font-bold text-red-600 mb-2">{stats.cancelled.count}</p>
+                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                <span className="font-medium text-foreground">{stats.cancelled.value.toLocaleString('en-US')}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                <span className={`font-medium ${stats.cancelled.remaining > 0 ? 'text-red-600' : stats.cancelled.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                    {stats.cancelled.remaining.toLocaleString('en-US')}
+                                </span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-gray-500">
                         <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.no_show}</p>
-                        <p className="text-2xl font-bold text-gray-600">{stats.no_show}</p>
+                        <p className="text-2xl font-bold text-gray-600 mb-2">{stats.no_show.count}</p>
+                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                <span className="font-medium text-foreground">{stats.no_show.value.toLocaleString('en-US')}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                <span className={`font-medium ${stats.no_show.remaining > 0 ? 'text-red-600' : stats.no_show.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                    {stats.no_show.remaining.toLocaleString('en-US')}
+                                </span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -249,7 +318,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
 
                 {/* Status Filter */}
                 <Select value={selectedStatus} onValueChange={setSelectedStatus} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-                    <SelectTrigger className="w-[120px] bg-white">
+                    <SelectTrigger className="w-[110px] bg-white">
                         <SelectValue placeholder={dict.dashboard.bookings.filters?.all_statuses || "All Statuses"} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -262,7 +331,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                 </Select>
 
                 {/* Branch Filter */}
-                <div className="w-[120px]">
+                <div className="w-[110px]">
                     <Select
                         value={selectedBranch}
                         onValueChange={setSelectedBranch}
@@ -287,7 +356,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                     dir={lang === 'ar' ? 'rtl' : 'ltr'}
                     disabled={selectedBranch === 'all'}
                 >
-                    <SelectTrigger className="w-[120px] bg-white">
+                    <SelectTrigger className="w-[110px] bg-white">
                         <SelectValue placeholder={dict.dashboard.bookings.filters?.all_services || "All Services"} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -307,7 +376,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                     dir={lang === 'ar' ? 'rtl' : 'ltr'}
                     disabled={selectedBranch === 'all'}
                 >
-                    <SelectTrigger className="w-[120px] bg-white">
+                    <SelectTrigger className="w-[110px] bg-white">
                         <SelectValue placeholder={dict.dashboard.bookings.filters?.all_employees || "All Employees"} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -362,14 +431,26 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                     const end = new Date(start.getTime())
 
                                     const duration = booking.duration_value
+
+                                    // Safer dictionary access with language fallback
+                                    const serviceDict = dict.services || {}
+                                    const labelHour = serviceDict.duration_hour || (lang === 'ar' ? "بالساعة" : "Hourly")
+                                    const labelDay = serviceDict.duration_day || (lang === 'ar' ? "باليوم" : "Daily")
+                                    const labelOpen = serviceDict.duration_open || (lang === 'ar' ? "مدة مفتوحة" : "Open Duration")
+
                                     if (booking.duration_unit === 'hour') {
                                         end.setHours(end.getHours() + duration)
                                         endTime = end
-                                        durationLabel = `${duration} ${dict.dashboard.bookings.steps.hour}`
+                                        durationLabel = `${duration} ${labelHour}`
                                     } else if (booking.duration_unit === 'day') {
                                         end.setDate(end.getDate() + duration)
                                         endTime = end
-                                        durationLabel = `${duration} ${dict.dashboard.bookings.steps.day}`
+                                        durationLabel = `${duration} ${labelDay}`
+                                    } else if (booking.duration_unit === 'open') {
+                                        // For open duration, we don't show the number
+                                        durationLabel = labelOpen
+                                        // End time is likely not applicable or same as start for "open" unless specified otherwise
+                                        endTime = null
                                     } else {
                                         durationLabel = `${duration} ${booking.duration_unit}`
                                     }

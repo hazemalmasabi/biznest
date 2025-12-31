@@ -348,6 +348,80 @@ export const dictionaries = {
                     net_amount: "Net Amount"
                 }
             },
+        },
+        help: {
+            title: "Help",
+            description: "Detailed guide to using the system features.",
+            getting_started: {
+                title: "Getting Started",
+                registration: {
+                    title: "Registration & Login",
+                    content: "To create a new account, go to the Sign Up page. You will need to provide: \n1. Full Name \n2. Email Address (Verified later) \n3. Phone Number \n4. Password (Must be at least 8 characters, include letters, numbers, and symbols). \n\nAfter signing up, check your email inbox (including Spam/Junk folder) for a verification link. You must verify your email to access the system."
+                },
+                login: {
+                    title: "Logging In",
+                    content: "Enter your registered email or username and password. If you cannot remember your password, click 'Forgot Password' on the login screen to reset it via email."
+                },
+                forgot_password: {
+                    title: "Forgot Password",
+                    content: "If you forgot your password: \n1. Click 'Forgot Password' on the login page. \n2. Enter your registered email address. \n3. Check your email for a reset link (check Spam folder if not found). \n4. Follow the link to create a new password."
+                }
+            },
+            dashboard: {
+                title: "Dashboard & Operations",
+                bookings: {
+                    title: "Bookings",
+                    content: "Manage your appointments efficiently:\n\n1. New Booking: Click 'New Booking'.\n2. Select Branch: Choose where the service is provided.\n3. Select Customer: Choose an existing client or create a new one instantly.\n4. Select Service: Pick a service (Price and Duration will be auto-filled).\n5. Select Time:\n   - Start Now: Sets the booking start time to right now.\n   - Select Time: Opens a calendar to pick a specific future date and time.\n\nVouchers & Payments:\n1. You cannot add a payment voucher while creating the booking.\n2. First, Save the booking.\n3. Then, click on the booking in the list -> 'Add Voucher' tab to record payments.",
+                },
+                services: {
+                    title: "Services",
+                    content: "Define your business offerings:\n\n1. Add Service: Enter Name, Price, and Duration.\n2. Duration Types:\n   - Hourly: Standard appointment length.\n   - Daily: For full-day rentals/services.\n   - Open: Flexible duration.\n3. Branch Assignment: You must check which branches offer this service.",
+                },
+                employees: {
+                    title: "Employees",
+                    content: "Manage your team access:\n\n1. Add Employee: Enter Full Name, Username (for login), and Phone.\n2. Assign Role:\n   - Manager: Full control over their assigned branch.\n   - Receptionist: Can only manage bookings and customers.\n3. Assign Branch: Crucial for Managers/Receptionists to see the right data.\n4. Password: Set a secure initial password.",
+                },
+                customers: {
+                    title: "Customers",
+                    content: "Client Database:\n\n1. Add Customer: Click 'Add Owner' or 'New Customer'.\n2. Required Fields: Name and Phone are mandatory.\n3. Notes: Add preferences or important details.\n4. History: Click on any customer to see their complete booking history and total spent.",
+                },
+                branches: {
+                    title: "Branches",
+                    content: "Manage Locations:\n\n1. Add Branch: Create a new location for your business.\n2. Main Branch: One branch can be marked as 'Main'.\n3. Management: You can edit details or delete a branch (if it has no active data linked).",
+                },
+                vouchers: {
+                    title: "Financial Vouchers",
+                    content: "Track your finances:\n\n1. Types:\n   - Receipt: Income (Money received from customer).\n   - Payment: Expense (Money paid out for supplies/bills).\n   - Refund: Returning money to a customer.\n\n2. Linking to Bookings:\n   - Step 1: Create the Booking first and save it.\n   - Step 2: Open the Booking details.\n   - Step 3: Go to Vouchers tab -> Create Receipt.\n   - This links the money to the specific service for accurate reporting.\n\n3. General Vouchers (Unlinked):\n   - Go to 'Vouchers' in the sidebar.\n   - Click 'New Voucher'.\n   - This is useful for general expenses (like rent, electricity) or general income.",
+                }
+            },
+            roles: {
+                title: "Roles & Permissions",
+                description: "Permission Matrix:",
+                note: "Note: The Owner has access to all branches. Employees are restricted to their branch. *Customers are shared across the entire business*.",
+                table: {
+                    headers: ["Feature", "Owner", "Manager", "Assistant", "Receptionist"],
+                    rows: [
+                        { feature: "Manage Branches (Add/Edit/Delete)", values: [true, false, false, false] },
+                        { feature: "Add Booking", values: [true, true, true, true] },
+                        { feature: "Edit Booking", values: [true, true, true, true] },
+                        { feature: "Add Voucher to Booking", values: [true, true, true, true] },
+                        { feature: "Delete Booking", values: [true, true, false, false] },
+                        { feature: "Add Customer", values: [true, true, true, true] },
+                        { feature: "Edit Customer", values: [true, true, true, true] },
+                        { feature: "Delete Customer", values: [true, true, false, false] },
+                        { feature: "Add Voucher", values: [true, true, true, true] },
+                        { feature: "Edit Voucher", values: [true, true, true, false] },
+                        { feature: "Delete Voucher", values: [true, true, false, false] },
+                        { feature: "Add Service", values: [true, true, false, false] },
+                        { feature: "Delete Service", values: [true, true, false, false] },
+                        { feature: "Edit Service", values: [true, true, true, false] },
+                        { feature: "Manage Employees (Add/Edit/Delete)", values: [true, true, false, false] },
+                        { feature: "Change Employee Username (for Employee)", values: [true, true, false, false] },
+                        { feature: "Change Own Password (for Employee)", values: [true, true, true, true] },
+                        { feature: "Edit Personal Info (Name, Phone)", values: [true, true, true, true] }
+                    ]
+                }
+            }
         }
     },
     ar: {
@@ -601,7 +675,7 @@ export const dictionaries = {
                 duration: "المدة",
                 status: "الحالة",
                 notes: "ملاحظات",
-                total_price: "إجمالي السعر",
+                total_price: "الإجمالي",
                 paid: "مدفوع",
                 remaining: "متبقي",
                 end_time: "وقت انتهاء الحجز:",
@@ -695,6 +769,80 @@ export const dictionaries = {
                     net_amount: "الصافي"
                 }
             },
+        },
+        help: {
+            title: "المساعدة",
+            description: "دليل شامل لاستخدام جميع ميزات النظام.",
+            getting_started: {
+                title: "البداية",
+                registration: {
+                    title: "التسجيل والدخول",
+                    content: "لإنشاء حساب جديد، توجه لصفحة 'حساب جديد'. ستحتاج لإدخال: \n1. الاسم الكامل \n2. البريد الإلكتروني (سيتم التحقق منه) \n3. رقم الجوال \n4. كلمة المرور (يجب أن تكون 8 خانات على الأقل، وتحتوي على حروف وأرقام ورموز). \n\nبعد التسجيل، يرجى التحقق من بريدك الإلكتروني (بما في ذلك مجلد الرسائل المزعجة/Spam) لتفعيل حسابك."
+                },
+                login: {
+                    title: "تسجيل الدخول",
+                    content: "استخدم بريدك الإلكتروني أو اسم المستخدم وكلمة المرور. إذا نسيت كلمة المرور، اضغط على 'نسيت كلمة المرور' لإعادة تعيينها عبر البريد."
+                },
+                forgot_password: {
+                    title: "نسيت كلمة المرور",
+                    content: "في حال فقدان كلمة المرور: \n1. اضغط 'نسيت كلمة المرور' في شاشة الدخول. \n2. أدخل بريدك المسجل. \n3. تفقد بريدك (ومجلد الرسائل المهملة) للرابط. \n4. اتبع الرابط لإنشاء كلمة مرور جديدة."
+                }
+            },
+            dashboard: {
+                title: "لوحة التحكم والعمليات",
+                bookings: {
+                    title: "الحجوزات",
+                    content: "إدارة المواعيد خطوة بخطوة:\n\n1. حجز جديد: اضغط زر 'حجز جديد'.\n2. اختيار الفرع: حدد الفرع الذي سيتم فيه الحجز.\n3. اختيار العميل: اختر عميلاً مسجلاً أو أضف عميلاً جديداً فوراً.\n4. اختيار الخدمة: حدد الخدمة (سيظهر السعر والمدة تلقائياً).\n5. تحديد الوقت:\n   - ابدأ الآن: يسجل وقت بداية الحجز فوراً.\n   - تحديد وقت: يفتح التقويم لاختيار موعد مستقبلي.\n\nالسندات والمدفوعات:\n1. قم بإنشاء الحجز وحفظه أولاً.\n2. اضغط على الحجز في القائمة لفتحه.\n3. انتقل لتبويب 'السندات' وأضف الدفعة.",
+                },
+                services: {
+                    title: "الخدمات",
+                    content: "تعريف خدمات المنشأة:\n\n1. إضافة خدمة: أدخل الاسم، السعر، والمدة.\n2. أنواع المدة:\n   - بالساعة: للمواعيد القياسية.\n   - يومي: للإيجارات.\n   - مفتوح: مدة مرنة.\n3. تعيين الفروع: فعل الخدمة في الفروع المطلوبة.",
+                },
+                employees: {
+                    title: "الموظفين",
+                    content: "إدارة فريق العمل:\n\n1. إضافة موظف: أدخل البيانات (الاسم، المستخدم، الجوال).\n2. تحديد الدور:\n   - مدير: تحكم كامل بفرعه.\n   - استقبال: إدارة حجوزات فقط.\n3. تحديد الفرع: مهم جداً لتخصيص البيانات.\n4. كلمة المرور: تعيين كلمة المرور.",
+                },
+                customers: {
+                    title: "العملاء",
+                    content: "قاعدة بيانات العملاء:\n\n1. إضافة عميل: اضغط زر الإضافة.\n2. البيانات المطلوبة: الاسم ورقم الجوال.\n3. الملاحظات: أضف أي تفضيلات للعميل.\n4. السجل: اضغط على أي عميل لعرض تاريخ حجوزاته بالكامل.",
+                },
+                branches: {
+                    title: "الفروع",
+                    content: "إدارة المواقع:\n\n1. إضافة فرع: أدخل اسم الفرع والعنوان.\n2. الفرع الرئيسي: ميز فرعك الرئيسي.\n3. الإدارة: التعديل والحذف متاح بشرط عدم وجود بيانات مرتبطة.",
+                },
+                vouchers: {
+                    title: "السندات المالية",
+                    content: "تتبع الإيرادات والمصروفات:\n\n1. أنواع السندات:\n   - سند قبض: دخل (من العملاء).\n   - سند صرف: مصروفات (فواتير).\n   - سند مرتجع: إعادة مبلغ.\n\n2. خطوات إضافة سند لحجز:\n   - الخطوة الأولى: أنشئ الحجز واحفظه.\n   - الخطوة الثانية: افتح تفاصيل الحجز.\n   - الخطوة الثالثة: اختر تبويب 'السندات' واضغط 'إنشاء سند'.\n\n3. سندات عامة (غير مرتبطة بحجز):\n   - اذهب إلى 'السندات المالية' في القائمة الجانبية.\n   - اضغط زر 'سند جديد'.\n   - يستخدم للمصروفات العامة (مثل الإيجار، الكهرباء) أو إيرادات عامة.",
+                }
+            },
+            roles: {
+                title: "الأدوار والصلاحيات",
+                description: "جدول الصلاحيات مقارنة بالأدوار:",
+                note: "ملاحظة: المالك لديه صلاحية الوصول لكل الفروع. الموظفين صلاحياتهم محصورة في فرعهم فقط. *العملاء مشتركون لكل المنشأة بالكامل*.",
+                table: {
+                    headers: ["الميزة", "المالك", "مدير", "مساعد", "استقبال"],
+                    rows: [
+                        { feature: "إدارة الفروع (إضافة/تعديل/حذف)", values: [true, false, false, false] },
+                        { feature: "إضافة حجز", values: [true, true, true, true] },
+                        { feature: "تعديل حجز", values: [true, true, true, true] },
+                        { feature: "إضافة سند لحجز", values: [true, true, true, true] },
+                        { feature: "حذف حجز", values: [true, true, false, false] },
+                        { feature: "إضافة عميل", values: [true, true, true, true] },
+                        { feature: "تعديل عميل", values: [true, true, true, true] },
+                        { feature: "حذف عميل", values: [true, true, false, false] },
+                        { feature: "إضافة سند", values: [true, true, true, true] },
+                        { feature: "تعديل سند", values: [true, true, true, false] },
+                        { feature: "حذف سند", values: [true, true, false, false] },
+                        { feature: "إضافة خدمة", values: [true, true, false, false] },
+                        { feature: "حذف خدمة", values: [true, true, false, false] },
+                        { feature: "تعديل خدمة", values: [true, true, true, false] },
+                        { feature: "إدارة الموظفين (إضافة/تعديل/حذف)", values: [true, true, false, false] },
+                        { feature: "تعديل اسم المستخدم للدخول (للموظف)", values: [true, true, false, false] },
+                        { feature: "تغيير كلمة المرور الشخصية (للموظف)", values: [true, true, true, true] },
+                        { feature: "تعديل البيانات الشخصية (الاسم، الجوال)", values: [true, true, true, true] }
+                    ]
+                }
+            }
         }
     }
 } as const

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Store, Users, User, Settings, LogOut, ChevronLeft, ChevronRight, Globe, Package, Calendar, FileText, Building2 } from 'lucide-react'
+import { LayoutDashboard, Store, Users, User, Settings, LogOut, ChevronLeft, ChevronRight, Globe, Package, Calendar, FileText, Building2, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { createClient } from '@/lib/supabase/client'
@@ -29,6 +29,7 @@ export function Sidebar({ dict, lang, role }: SidebarProps) {
         { href: '/dashboard/employees', label: dict?.dashboard?.nav?.employees || "Employees", icon: Users },
         { href: '/dashboard/branches', label: dict?.dashboard?.nav?.branches || "Branches", icon: Store },
         { href: '/dashboard/settings', label: dict?.dashboard?.nav?.settings || "Settings", icon: Settings },
+        { href: '/dashboard/help', label: dict?.help?.title || "Help", icon: HelpCircle },
     ]
 
     const navItems = allNavItems.filter(item => item.href !== '/dashboard/branches' || role === 'owner')

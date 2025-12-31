@@ -3,13 +3,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { getBranches } from './branches/actions'
 
+export type StatItem = {
+    count: number
+    value: number
+    remaining: number
+}
+
 export type DashboardStats = {
     bookings: {
-        total: number
-        scheduled: number
-        completed: number
-        cancelled: number
-        no_show: number
+        total: StatItem
+        scheduled: StatItem
+        completed: StatItem
+        cancelled: StatItem
+        no_show: StatItem
     }
     vouchers: {
         total_receipts: number
@@ -80,20 +86,33 @@ export async function getDashboardStats(dateFrom: string, dateTo: string, branch
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return {
-        bookings: { total: 0, scheduled: 0, completed: 0, cancelled: 0, no_show: 0 },
+        bookings: {
+            total: { count: 0, value: 0, remaining: 0 },
+            scheduled: { count: 0, value: 0, remaining: 0 },
+            completed: { count: 0, value: 0, remaining: 0 },
+            cancelled: { count: 0, value: 0, remaining: 0 },
+            no_show: { count: 0, value: 0, remaining: 0 }
+        },
         vouchers: { total_receipts: 0, total_payments: 0, total_refunds: 0, net: 0 }
     }
 
     const businessId = await getBusinessId(supabase, user.id)
     if (!businessId) return {
-        bookings: { total: 0, scheduled: 0, completed: 0, cancelled: 0, no_show: 0 },
+        bookings: {
+            total: { count: 0, value: 0, remaining: 0 },
+            scheduled: { count: 0, value: 0, remaining: 0 },
+            completed: { count: 0, value: 0, remaining: 0 },
+            cancelled: { count: 0, value: 0, remaining: 0 },
+            no_show: { count: 0, value: 0, remaining: 0 }
+        },
         vouchers: { total_receipts: 0, total_payments: 0, total_refunds: 0, net: 0 }
     }
+
 
     // --- Bookings Query ---
     let bookingsQuery = supabase
         .from('bookings')
-        .select('status')
+        .select('id, status, price')
         .eq('business_id', businessId)
         .eq('is_deleted', false)
         .gte('start_time', dateFrom)
@@ -105,12 +124,53 @@ export async function getDashboardStats(dateFrom: string, dateTo: string, branch
 
     const { data: bookingsData } = await bookingsQuery
 
+    // Fetch vouchers linked to these bookings to calculate remaining amount
+    const bookingIds = bookingsData?.map((b: any) => b.id) || []
+    let bookingVouchers: any[] = []
+
+    if (bookingIds.length > 0) {
+        const { data } = await supabase
+            .from('vouchers')
+            .select('booking_id, amount, type')
+            .in('booking_id', bookingIds)
+            .eq('is_deleted', false)
+        bookingVouchers = data || []
+    }
+
+    const calculateStat = (status?: string) => {
+        const filtered = status
+            ? bookingsData?.filter((b: any) => b.status === status)
+            : bookingsData
+
+        if (!filtered || filtered.length === 0) return { count: 0, value: 0, remaining: 0 }
+
+        const totalValue = filtered.reduce((sum: number, b: any) => sum + (Number(b.price) || 0), 0)
+
+        // Calculate remaining for these bookings
+        const totalRemaining = filtered.reduce((sum: number, b: any) => {
+            // Get vouchers for this booking
+            const vouchers = bookingVouchers.filter((v: any) => v.booking_id === b.id)
+            const paid = vouchers.reduce((pSum: number, v: any) => {
+                if (v.type === 'receipt') return pSum + Number(v.amount)
+                if (v.type === 'refund') return pSum - Number(v.amount)
+                return pSum
+            }, 0)
+            return sum + (Number(b.price) - paid)
+        }, 0)
+
+        return {
+            count: filtered.length,
+            value: totalValue,
+            remaining: totalRemaining
+        }
+    }
+
     const bookingsStats = {
-        total: bookingsData?.length || 0,
-        scheduled: bookingsData?.filter((b: any) => b.status === 'scheduled').length || 0,
-        completed: bookingsData?.filter((b: any) => b.status === 'completed').length || 0,
-        cancelled: bookingsData?.filter((b: any) => b.status === 'cancelled').length || 0,
-        no_show: bookingsData?.filter((b: any) => b.status === 'no_show').length || 0,
+        total: calculateStat(),
+        scheduled: calculateStat('scheduled'),
+        completed: calculateStat('completed'),
+        cancelled: calculateStat('cancelled'),
+        no_show: calculateStat('no_show'),
     }
 
     // --- Vouchers Query ---

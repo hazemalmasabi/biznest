@@ -111,7 +111,7 @@ export function CustomerBookingsDialog({ open, onOpenChange, customerId, custome
                                     <TableHead className="text-center">{dict.dashboard.services?.price_label || (lang === 'ar' ? "السعر" : "Price")}</TableHead>
                                     <TableHead className="text-center">{dict.dashboard.bookings?.fields?.duration || (lang === 'ar' ? "المدة" : "Duration")}</TableHead>
                                     <TableHead className="text-center">{dict.dashboard.bookings?.fields?.end_time || (lang === 'ar' ? "وقت الانتهاء" : "End")}</TableHead>
-                                    <TableHead className="text-center">{dict.dashboard.bookings?.fields?.total_price || (lang === 'ar' ? "إجمالي السعر" : "Total")}</TableHead>
+                                    <TableHead className="text-center">{dict.dashboard.bookings?.fields?.total_price || (lang === 'ar' ? "الإجمالي" : "Total")}</TableHead>
                                     <TableHead className="text-center">{dict.dashboard.bookings?.fields?.paid_amount || (lang === 'ar' ? "مدفوع" : "Paid")}</TableHead>
                                     <TableHead className="text-center">{dict.dashboard.bookings?.fields?.remaining_amount || (lang === 'ar' ? "متبقي" : "Remaining")}</TableHead>
                                     <TableHead className="text-center">{dict.dashboard.bookings?.fields?.status || (lang === 'ar' ? "الحالة" : "Status")}</TableHead>
@@ -135,7 +135,17 @@ export function CustomerBookingsDialog({ open, onOpenChange, customerId, custome
                                                 </TableCell>
                                                 <TableCell className="text-center">{booking.price}</TableCell>
                                                 <TableCell className="text-center text-sm">
-                                                    {booking.duration_value} {booking.duration_unit}
+                                                    {(() => {
+                                                        const serviceDict = dict.services || {}
+                                                        const labelHour = serviceDict.duration_hour || (lang === 'ar' ? "بالساعة" : "Hourly")
+                                                        const labelDay = serviceDict.duration_day || (lang === 'ar' ? "باليوم" : "Daily")
+                                                        const labelOpen = serviceDict.duration_open || (lang === 'ar' ? "مدة مفتوحة" : "Open Duration")
+
+                                                        if (booking.duration_unit === 'hour') return `${booking.duration_value} ${labelHour}`
+                                                        if (booking.duration_unit === 'day') return `${booking.duration_value} ${labelDay}`
+                                                        if (booking.duration_unit === 'open') return labelOpen
+                                                        return `${booking.duration_value} ${booking.duration_unit}`
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
                                                     <div className="flex flex-col">
