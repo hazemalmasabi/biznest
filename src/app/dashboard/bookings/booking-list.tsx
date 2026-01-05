@@ -141,13 +141,18 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
         setDeleteId(id)
     }
 
-    const getStatusColor = (status: string) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'scheduled': return 'bg-blue-100 text-blue-800'
-            case 'completed': return 'bg-green-100 text-green-800'
-            case 'cancelled': return 'bg-red-100 text-red-800'
-            case 'no_show': return 'bg-gray-100 text-gray-800'
-            default: return 'bg-gray-100 text-gray-800'
+            case 'scheduled':
+                return <Badge variant="outline" className="text-blue-600 border-blue-600">{dict.dashboard.bookings?.statuses?.scheduled || (lang === 'ar' ? "مجدول" : "Scheduled")}</Badge>
+            case 'completed':
+                return <Badge variant="outline" className="text-green-600 border-green-600">{dict.dashboard.bookings?.statuses?.completed || (lang === 'ar' ? "مكتمل" : "Completed")}</Badge>
+            case 'cancelled':
+                return <Badge variant="outline" className="text-red-600 border-red-600">{dict.dashboard.bookings?.statuses?.cancelled || (lang === 'ar' ? "ملغي" : "Cancelled")}</Badge>
+            case 'no_show':
+                return <Badge variant="outline" className="text-orange-600 border-orange-600">{dict.dashboard.bookings?.statuses?.no_show || (lang === 'ar' ? "لا يوجد عرض" : "No Show")}</Badge>
+            default:
+                return <Badge variant="outline">{status}</Badge>
         }
     }
 
@@ -440,6 +445,9 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
 
                                     if (booking.duration_unit === 'hour') {
                                         end.setHours(end.getHours() + duration)
+                                        if (booking.has_half_hour) {
+                                            end.setMinutes(end.getMinutes() + 30)
+                                        }
                                         endTime = end
                                         durationLabel = `${duration} ${labelHour}`
                                     } else if (booking.duration_unit === 'day') {
@@ -453,6 +461,19 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                         endTime = null
                                     } else {
                                         durationLabel = `${duration} ${booking.duration_unit}`
+                                    }
+
+                                    if (booking.has_half_hour && booking.duration_unit === 'hour') {
+                                        // Request: "1 بالساعة" then "+" then "نصف ساعة" vertically
+                                        const halfHourText = lang === 'ar' ? "نصف ساعة" : "Half Hour"
+                                        durationLabel = (
+                                            <div className="flex flex-col items-center gap-0 leading-tight">
+                                                <span>{duration} {labelHour}</span>
+                                                <span className="font-bold text-muted-foreground">+</span>
+                                                <span className="text-blue-600 font-bold">{halfHourText}</span>
+                                            </div>
+                                        ) as any
+                                        // Let's change how we store it.
                                     }
                                 }
 
@@ -476,9 +497,16 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            {/* Price (Rate) */}
+                                            {/* Price (Breakdown now requested here) */}
                                             {booking.duration_value && booking.price ? (
-                                                (Number(booking.price) / Number(booking.duration_value)).toFixed(2)
+                                                booking.has_half_hour && booking.half_hour_price ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="font-medium">{parseFloat(((Number(booking.price) - Number(booking.half_hour_price)) / Number(booking.duration_value)).toFixed(2))}</span>
+                                                        <span className="text-xs text-blue-600 font-bold" dir="ltr">+ {parseFloat(Number(booking.half_hour_price).toFixed(2))}</span>
+                                                    </div>
+                                                ) : (
+                                                    parseFloat((Number(booking.price) / Number(booking.duration_value)).toFixed(2))
+                                                )
                                             ) : '-'}
                                         </TableCell>
                                         <TableCell className="text-center">
@@ -490,6 +518,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center">
+                                            {/* Total Price (Sum now requested here) */}
                                             {booking.price}
                                         </TableCell>
                                         <TableCell className="text-center">
@@ -506,9 +535,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                             })()}
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            <Badge className={getStatusColor(booking.status)} variant="secondary">
-                                                {dict.dashboard.bookings.statuses[booking.status] || booking.status}
-                                            </Badge>
+                                            {getStatusBadge(booking.status)}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <span className="text-sm text-muted-foreground">{booking.created_by?.full_name || '-'}</span>

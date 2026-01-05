@@ -23,6 +23,7 @@ import { getCustomers } from '../customers/actions'
 import { CustomerDialog } from '../customers/customer-dialog'
 import { Loader2, Search, Plus, Calendar, Clock, User, X, Edit2, Trash2, FileText, List } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Switch } from "@/components/ui/switch"
 import { VoucherDialog } from '../vouchers/voucher-dialog'
 import { BookingVouchersList } from './booking-vouchers-list'
 import { getVouchers } from '../vouchers/actions'
@@ -51,7 +52,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
         price: '',
         paid_amount: '0',
         status: 'scheduled',
-        notes: ''
+        notes: '',
+        has_half_hour: false,
+        half_hour_price: '0'
     })
 
     // Sub-states
@@ -124,7 +127,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                     price: bookingToEdit.price.toString(),
                     paid_amount: bookingToEdit.paid_amount?.toString() || '0',
                     status: bookingToEdit.status,
-                    notes: bookingToEdit.notes || ''
+                    notes: bookingToEdit.notes || '',
+                    has_half_hour: bookingToEdit.has_half_hour || false,
+                    half_hour_price: bookingToEdit.half_hour_price?.toString() || '0'
                 })
 
                 // Set initial selections
@@ -133,7 +138,8 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                 // Calculate Unit Price
                 const total = parseFloat(bookingToEdit.price) || 0
                 const dur = parseFloat(bookingToEdit.duration_value) || 1
-                setUnitPrice(dur > 0 ? (total / dur).toString() : '0')
+                const half = bookingToEdit.has_half_hour ? (parseFloat(bookingToEdit.half_hour_price) || 0) : 0
+                setUnitPrice(dur > 0 ? ((total - half) / dur).toString() : '0')
 
                 // Service will be set by branch effect or we need to look it up
                 // We rely on branch effect to load services, then we might need to find the specific service
@@ -158,7 +164,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                     price: '',
                     paid_amount: '0',
                     status: 'scheduled',
-                    notes: ''
+                    notes: '',
+                    has_half_hour: false,
+                    half_hour_price: '0'
                 })
                 setUnitPrice('')
                 setSelectedCustomer(null)
@@ -265,6 +273,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
 
             if (bookingData.duration_unit === 'hour') {
                 startDate.setTime(startDate.getTime() + (duration * 60 * 60 * 1000))
+                if (bookingData.has_half_hour) {
+                    startDate.setTime(startDate.getTime() + (30 * 60 * 1000))
+                }
             } else if (bookingData.duration_unit === 'day') {
                 startDate.setDate(startDate.getDate() + duration)
             }
@@ -282,6 +293,10 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
         formData.append('price', bookingData.price)
         formData.append('paid_amount', bookingData.paid_amount || '0')
         formData.append('status', bookingData.status)
+        formData.append('has_half_hour', String(bookingData.has_half_hour))
+        if (bookingData.has_half_hour) {
+            formData.append('half_hour_price', bookingData.half_hour_price)
+        }
         if (bookingData.notes) formData.append('notes', bookingData.notes)
 
         const result = bookingToEdit
@@ -492,7 +507,8 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                                             setUnitPrice(val)
                                             const unit = parseFloat(val) || 0
                                             const dur = parseFloat(bookingData.duration_value) || 0
-                                            setBookingData(prev => ({ ...prev, price: (unit * dur).toString() }))
+                                            const half = bookingData.has_half_hour ? (parseFloat(bookingData.half_hour_price) || 0) : 0
+                                            setBookingData(prev => ({ ...prev, price: ((unit * dur) + half).toString() }))
                                         }
                                     }}
                                     dir="ltr"
@@ -514,7 +530,8 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                                             if (val === '' || /^\d*$/.test(val)) {
                                                 const dur = parseFloat(val) || 0
                                                 const unit = parseFloat(unitPrice) || 0
-                                                setBookingData(prev => ({ ...prev, duration_value: val, price: (unit * dur).toString() }))
+                                                const half = bookingData.has_half_hour ? (parseFloat(bookingData.half_hour_price) || 0) : 0
+                                                setBookingData(prev => ({ ...prev, duration_value: val, price: ((unit * dur) + half).toString() }))
                                             }
                                         }}
                                         onBlur={(e) => {
@@ -532,6 +549,74 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                                     </div>
                                 )}
                             </div>
+
+                            {/* Half Hour Toggle */}
+                            {bookingData.duration_unit === 'hour' && (
+                                <div className="grid gap-2">
+                                    <Label>{lang === 'ar' ? "إضافة نصف ساعة" : "Add Half Hour"}</Label>
+                                    <div className="flex items-center gap-2 h-10">
+                                        <Switch
+                                            className="border-2 border-slate-300 data-[state=unchecked]:bg-slate-300 data-[state=checked]:border-black data-[state=checked]:bg-black"
+                                            checked={bookingData.has_half_hour}
+                                            onCheckedChange={(checked) => {
+                                                setBookingData(prev => {
+                                                    const unit = parseFloat(unitPrice) || 0
+                                                    const dur = parseFloat(prev.duration_value) || 0
+                                                    // If checking, add half price. If unchecking, remove it (or add 0).
+                                                    // Note: We use the EXISTING half_hour_price if checking, or 0 if unchecking.
+                                                    // But wait, if we uncheck, we keep half_hour_price in state but don't add it.
+                                                    // The logic below:
+                                                    const halfPrice = checked ? (parseFloat(prev.half_hour_price) || 0) : 0
+                                                    const total = (unit * dur) + halfPrice
+
+                                                    return {
+                                                        ...prev,
+                                                        has_half_hour: checked,
+                                                        // half_hour_price: checked ? prev.half_hour_price : '0', // Don't reset price to 0 on uncheck, keep it in memory? Or reset?
+                                                        // User logic was: checked ? prev : '0'. Let's stick to that but be careful.
+                                                        // Actually if I reset to '0', when I toggle back ON, it will be 0.
+                                                        // Better to keep it? The previous code was: checked ? prev.half_hour_price : '0'
+                                                        // This means if I uncheck, it becomes 0. If I check again, it stays 0. 
+                                                        // That might be annoying. Let's JUST toggle flag and recalc total.
+                                                        // But previous code was resetting it. Let's assume user wants to retain if possible?
+                                                        // Or maybe just follow the requested "update Total" logic.
+                                                        // Let's keep the existing logic of half_hour_price for now but fix Total.
+                                                        half_hour_price: checked ? prev.half_hour_price : prev.half_hour_price, // Changed: Don't lose the value on toggle off?
+                                                        // Actually, if I uncheck, Total should decrease.
+                                                        price: total.toString()
+                                                    }
+                                                })
+                                            }}
+                                        />
+                                        <span className="text-sm font-medium">{bookingData.has_half_hour ? (lang === 'ar' ? "مفعل" : "Enabled") : (lang === 'ar' ? "غير مفعل" : "Disabled")}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Half Hour Price */}
+                            {bookingData.has_half_hour && bookingData.duration_unit === 'hour' && (
+                                <div className="grid gap-2 animate-in fade-in slide-in-from-top-1">
+                                    <Label>{lang === 'ar' ? "سعر النصف ساعة" : "Half Hour Price"}</Label>
+                                    <Input
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={bookingData.half_hour_price}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                                // Recalc total
+                                                const unit = parseFloat(unitPrice) || 0
+                                                const dur = parseFloat(bookingData.duration_value) || 0
+                                                const half = parseFloat(val) || 0
+                                                const total = (unit * dur) + half
+                                                setBookingData(prev => ({ ...prev, half_hour_price: val, price: total.toString() }))
+                                            }
+                                        }}
+                                        dir="ltr"
+                                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                </div>
+                            )}
 
                             <div className="grid gap-2">
                                 <Label>{dict.dashboard.bookings.status}</Label>
@@ -570,6 +655,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                                         const duration = parseFloat(bookingData.duration_value) || 0
                                         if (bookingData.duration_unit === 'hour') {
                                             startTime.setTime(startTime.getTime() + (duration * 60 * 60 * 1000))
+                                            if (bookingData.has_half_hour) {
+                                                startTime.setTime(startTime.getTime() + (30 * 60 * 1000))
+                                            }
                                         } else if (bookingData.duration_unit === 'day') {
                                             startTime.setDate(startTime.getDate() + duration)
                                         }

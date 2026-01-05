@@ -30,6 +30,8 @@ export type Booking = {
     }
     branch?: { name: string }
     created_by?: { full_name: string }
+    has_half_hour?: boolean
+    half_hour_price?: number
 }
 
 async function getBusinessId(supabase: any, userId: string): Promise<number | null> {
@@ -166,6 +168,8 @@ export async function createBooking(formData: FormData) {
     const duration_unit = formData.get('duration_unit') as string
     const price = formData.get('price')
     // paid_amount removed
+    const has_half_hour = formData.get('has_half_hour') === 'true'
+    const half_hour_price = formData.get('half_hour_price')
     const status = formData.get('status')
     const notes = formData.get('notes') as string
 
@@ -185,7 +189,10 @@ export async function createBooking(formData: FormData) {
             end_time: end_time || null,
             duration_value: duration_value ? Number(duration_value) : null,
             duration_unit,
+            duration_unit,
             price: Number(price),
+            has_half_hour,
+            half_hour_price: half_hour_price ? Number(half_hour_price) : 0,
             // paid_amount: 0, // No longer set manually
             notes: notes || null,
             status: status ? String(status) : 'scheduled',
@@ -227,6 +234,8 @@ export async function updateBooking(id: number, formData: FormData) {
     const duration_unit = formData.get('duration_unit') as string
     const price = formData.get('price')
     // paid_amount removed
+    const has_half_hour = formData.get('has_half_hour') === 'true'
+    const half_hour_price = formData.get('half_hour_price')
     const status = formData.get('status')
     const notes = formData.get('notes') as string
 
@@ -244,7 +253,10 @@ export async function updateBooking(id: number, formData: FormData) {
             end_time: end_time || null,
             duration_value: duration_value ? Number(duration_value) : null,
             duration_unit,
+            duration_unit,
             price: Number(price),
+            has_half_hour,
+            half_hour_price: half_hour_price ? Number(half_hour_price) : 0,
             // paid_amount: 0, // No longer set manually
             notes: notes || null,
             status: status ? String(status) : 'scheduled'

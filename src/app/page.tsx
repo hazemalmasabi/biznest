@@ -45,9 +45,11 @@ export default async function LandingPage() {
                     {dict.landing.start_trial}
                   </Button>
                 </Link>
-                <Button variant="outline" className="h-11 px-8" size="lg">
-                  {dict.landing.learn_more}
-                </Button>
+                <Link href="/help">
+                  <Button variant="outline" className="h-11 px-8" size="lg">
+                    {dict.help.title}
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
