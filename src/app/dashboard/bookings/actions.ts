@@ -189,7 +189,7 @@ export async function createBooking(formData: FormData) {
             end_time: end_time || null,
             duration_value: duration_value ? Number(duration_value) : null,
             duration_unit,
-            duration_unit,
+
             price: Number(price),
             has_half_hour,
             half_hour_price: half_hour_price ? Number(half_hour_price) : 0,
@@ -253,7 +253,7 @@ export async function updateBooking(id: number, formData: FormData) {
             end_time: end_time || null,
             duration_value: duration_value ? Number(duration_value) : null,
             duration_unit,
-            duration_unit,
+
             price: Number(price),
             has_half_hour,
             half_hour_price: half_hour_price ? Number(half_hour_price) : 0,
