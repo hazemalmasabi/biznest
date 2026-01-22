@@ -270,7 +270,7 @@ export function PublicBookingClient({ branch, services, durations: rawDurations,
 
     const handleNextStep = () => {
         setErrorMessage(null)
-        if (step === 1 && selectedDate) {
+        if (step === 1 && selectedDate && !dateError) {
             setStep(2)
         } else if (step === 2 && selectedTime) {
             setStep(3)
@@ -649,18 +649,24 @@ export function PublicBookingClient({ branch, services, durations: rawDurations,
                                         <Input
                                             type="date"
                                             className="w-full bg-white text-lg h-12"
-                                            min={new Date().toISOString().split('T')[0]}
+                                            // Fix: Use local date string for min to avoid timezone issues
+                                            min={new Date().toLocaleDateString('en-CA')}
                                             value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
                                             onChange={(e) => {
                                                 if (e.target.value) {
-                                                    // Parse string as Local Date (00:00 Local)
+                                                    // Parse string as Local Date
+                                                    // FIX: Set time to NOON (12:00) to avoid any midnight/timezone 
+                                                    // shifts that could cause getDay() to return the previous day on some mobiles.
                                                     const d = parse(e.target.value, 'yyyy-MM-dd', new Date())
+                                                    d.setHours(12, 0, 0, 0)
+
                                                     const day = d.getDay()
                                                     const wh = workingHours.find(w => w.day_of_week === day)
 
                                                     if (!wh || wh.is_closed) {
                                                         setDateError(t.booking.branch_closed)
-                                                        setSelectedDate(undefined)
+                                                        // Fix: Keep the date selected so user sees what they picked, but show error
+                                                        setSelectedDate(d)
                                                         return
                                                     }
 
@@ -874,11 +880,13 @@ export function PublicBookingClient({ branch, services, durations: rawDurations,
                                 </Button>
                             </div>
                         )}
+
+
                     </div>
 
                     <DialogFooter className="gap-2 sm:justify-end border-t pt-4 flex flex-col-reverse sm:flex-row">
                         {step === 1 && (
-                            <Button className="w-full sm:w-auto" disabled={!selectedDate} onClick={handleNextStep}>
+                            <Button className="w-full sm:w-auto" disabled={!selectedDate || !!dateError} onClick={handleNextStep}>
                                 {t.common.next} <ChevronLeft className={`w-4 h-4 ${dir === 'rtl' ? 'mr-2' : 'ml-2 rotate-180'}`} />
                             </Button>
                         )}

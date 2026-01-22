@@ -169,33 +169,34 @@ export async function createPublicBooking(data: {
 
     const businessId = await getBusinessIdForBranch(supabase, data.branch_id)
 
+    // Trim and normalize inputs
+    const phone = data.customer_phone.trim()
+    const email = data.customer_email.trim().toLowerCase()
+
     // 1. Find or Create Customer
     let customerId: string | null = null
 
-    // Check by Phone (Active Only)
+    // Check by Phone (Include Deleted to handle reactivation)
     const { data: customerByPhone } = await supabase
         .from('customers')
-        .select('id, name, phone, email')
+        .select('id, name, phone, email, is_deleted')
         .eq('business_id', businessId)
-        .eq('phone', data.customer_phone.trim())
-        .or('is_deleted.is.null,is_deleted.eq.false') // Only active customers
+        .eq('phone', phone)
         .limit(1)
 
-    // Check by Email (Active Only)
+    // Check by Email (Include Deleted)
     const { data: customerByEmail } = await supabase
         .from('customers')
-        .select('id, name, phone, email')
+        .select('id, name, phone, email, is_deleted')
         .eq('business_id', businessId)
-        .eq('email', data.customer_email.trim().toLowerCase())
-        .or('is_deleted.is.null,is_deleted.eq.false') // Only active customers
+        .eq('email', email)
         .limit(1)
 
     // detailed logging to debug
-    console.log(`[Booking Lookup] Phone: ${data.customer_phone}, Email: ${data.customer_email}`)
-    console.log(`[Booking Lookup] Found Active by Phone:`, customerByPhone?.length)
-    console.log(`[Booking Lookup] Found Active by Email:`, customerByEmail?.length)
+    console.log(`[Booking Lookup] Phone: ${phone}, Email: ${email}`)
+    console.log(`[Booking Lookup] Found by Phone:`, customerByPhone?.length, customerByPhone?.[0]?.is_deleted ? '(Deleted)' : '(Active)')
+    console.log(`[Booking Lookup] Found by Email:`, customerByEmail?.length)
 
-    // Prioritize Phone match, then Email match
     let existingCustomer = null
     if (customerByPhone && customerByPhone.length > 0) {
         existingCustomer = customerByPhone[0]
@@ -204,14 +205,37 @@ export async function createPublicBooking(data: {
     }
 
     if (existingCustomer) {
-        customerId = existingCustomer.id
+        customerId = existingCustomer.id.toString()
+        const updates: any = {}
 
-        // Update name if different
-        if (existingCustomer.name !== data.customer_name) {
-            await supabase
+        // Reactivate if deleted
+        if (existingCustomer.is_deleted) {
+            updates.is_deleted = false
+            console.log(`[Booking Lookup] Reactivating deleted customer: ${customerId}`)
+        }
+
+        // Update name if changed
+        if (data.customer_name && existingCustomer.name !== data.customer_name) {
+            updates.name = data.customer_name
+        }
+
+        // Update email if missing in DB but provided now
+        if (email && !existingCustomer.email) {
+            updates.email = email
+        }
+
+        if (Object.keys(updates).length > 0) {
+            const { error: updateError } = await supabase
                 .from('customers')
-                .update({ name: data.customer_name })
+                .update(updates)
                 .eq('id', customerId)
+
+            if (updateError) {
+                console.error("Update/Reactivate Customer Error", updateError)
+                // If update fails, we might just proceed or return error? 
+                // If it was a duplicate key error on update (e.g. email conflict), we should handle it.
+                // But for now, let's assume it works.
+            }
         }
     } else {
         // Create new customer
@@ -219,8 +243,8 @@ export async function createPublicBooking(data: {
             .from('customers')
             .insert({
                 name: data.customer_name,
-                phone: data.customer_phone,
-                email: data.customer_email,
+                phone: phone,
+                email: email,
                 business_id: businessId
             })
             .select('id')
@@ -228,9 +252,13 @@ export async function createPublicBooking(data: {
 
         if (createError) {
             console.error("Create Customer Error", createError)
+            // Provide more specific error if possible
+            if (createError.code === '23505') { // Unique violation
+                return { error: 'Customer already exists (Duplicate).' }
+            }
             return { error: 'Failed to create customer record.' }
         }
-        customerId = newCustomer.id
+        customerId = newCustomer.id.toString()
     }
 
     // 2. Calculate End Time

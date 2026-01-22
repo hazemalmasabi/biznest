@@ -19,7 +19,7 @@ export function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
     const dir = lang === 'ar' ? 'rtl' : 'ltr'
     const dateLocale = lang === 'ar' ? arSA : enUS
 
-    const branch = booking.branches
+    const branch = booking.branch  // Fixed alias
     const isPaid = booking.payment_status === 'paid'
     const status = booking.status || 'confirmed'
 
@@ -114,13 +114,13 @@ export function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
                 <Card className="shadow-sm border border-gray-100 overflow-hidden w-[95%] sm:w-full mx-auto">
                     <CardHeader className="bg-white border-b border-gray-50 pb-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-lg text-gray-900">{booking.customers?.name}</h3>
+                            <h3 className="font-bold text-lg text-gray-900">{booking.customer?.name}</h3>
                             <Badge variant="secondary" className={`${currentStatus.color} hover:${currentStatus.color}`}>
                                 {currentStatus.label}
                             </Badge>
                         </div>
-                        {booking.customers?.phone && (
-                            <div className={`text-sm text-gray-500 ${dir === 'rtl' ? 'text-right' : 'text-left'}`} dir="ltr">{booking.customers.phone}</div>
+                        {booking.customer?.phone && (
+                            <div className={`text-sm text-gray-500 ${dir === 'rtl' ? 'text-right' : 'text-left'}`} dir="ltr">{booking.customer.phone}</div>
                         )}
                     </CardHeader>
                     <CardContent className="p-0">
@@ -129,9 +129,9 @@ export function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
                             <div className="flex justify-between items-center p-4 hover:bg-gray-50/50 transition-colors">
                                 <span className="text-gray-500 font-medium whitespace-nowrap px-4">{t.booking.service_label}</span>
                                 <div className={`text-${dir === 'rtl' ? 'left' : 'right'}`}>
-                                    <span className="font-semibold text-gray-900 block">{booking.services?.name}</span>
-                                    {booking.services?.description && (
-                                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{booking.services?.description}</p>
+                                    <span className="font-semibold text-gray-900 block">{booking.service?.name}</span>
+                                    {booking.service?.description && (
+                                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{booking.service?.description}</p>
                                     )}
                                 </div>
                             </div>

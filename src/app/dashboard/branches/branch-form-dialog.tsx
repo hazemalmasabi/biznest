@@ -196,9 +196,11 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                 // If editing, save hours
                 if (branchToEdit) {
                     await updateBranchWorkingHours(branchToEdit.id, workingHours)
+                } else if (result.branch) {
+                    // If created successfully, use the returned ID to save hours
+                    // Need to cast result.branch as it might be typed loosely or we know it has id
+                    await updateBranchWorkingHours((result.branch as any).id, workingHours)
                 }
-                // If creating, we can't save hours yet without ID.
-                // User may need to edit created branch to set hours.
 
                 router.refresh()
                 onOpenChange(false)

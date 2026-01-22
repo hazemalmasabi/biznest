@@ -174,7 +174,7 @@ export async function createBranch(formData: FormData) {
         imageUrl = await uploadBranchImage(imageFile, user.id)
     }
 
-    const { error } = await supabase
+    const { data: newBranch, error } = await supabase
         .from('branches')
         .insert({
             business_id: member.business_id,
@@ -186,6 +186,8 @@ export async function createBranch(formData: FormData) {
             location_url: locationUrl || null,
             image_url: imageUrl
         })
+        .select()
+        .single()
 
     if (error) {
         if (error.code === '23505') {
@@ -195,7 +197,7 @@ export async function createBranch(formData: FormData) {
     }
 
     revalidatePath('/dashboard/branches')
-    return { success: true }
+    return { success: true, branch: newBranch }
 }
 
 export async function updateBranch(id: number, formData: FormData) {

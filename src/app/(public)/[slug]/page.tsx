@@ -70,7 +70,6 @@ async function getPublicBranchData(slug: string) {
         .select('*')
         .in('service_id', serviceIds)
 
-    // 4. Fetch Working Hours
     const { data: workingHours } = await supabase
         .from('branch_working_hours')
         .select('*')
