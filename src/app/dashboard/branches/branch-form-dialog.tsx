@@ -196,10 +196,10 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                 // If editing, save hours
                 if (branchToEdit) {
                     await updateBranchWorkingHours(branchToEdit.id, workingHours)
-                } else if (result.branch) {
+                } else if ((result as any).branch) {
                     // If created successfully, use the returned ID to save hours
                     // Need to cast result.branch as it might be typed loosely or we know it has id
-                    await updateBranchWorkingHours((result.branch as any).id, workingHours)
+                    await updateBranchWorkingHours(((result as any).branch).id, workingHours)
                 }
 
                 router.refresh()
