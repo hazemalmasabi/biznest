@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import crypto from 'crypto'
+import { sendBookingCancellationEmail } from '@/lib/mail'
 
 export type Booking = {
     id: number
@@ -15,7 +17,8 @@ export type Booking = {
     duration_unit: 'hour' | 'day' | 'open'
     price: number
     paid_amount: number // Now computed
-    status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+    status: 'scheduled' | 'completed' | 'cancelled' | 'under_review'
+    token?: string | null
     notes?: string | null
     created_at: string
     service?: { name: string }
@@ -28,7 +31,7 @@ export type Booking = {
         gender?: string
         date_of_birth?: string
     }
-    branch?: { name: string }
+    branch?: { name: string; slug?: string }
     created_by?: { full_name: string }
     has_half_hour?: boolean
     half_hour_price?: number
@@ -85,7 +88,7 @@ export async function getBookings(customerId?: number): Promise<Booking[]> {
             *,
             service:services(name),
             customer:customers(id, name, phone, email, notes, gender, date_of_birth),
-            branch:branches(name),
+            branch:branches(name, slug),
             created_by:profiles(full_name),
             vouchers(amount, type, is_deleted)
         `)
@@ -196,6 +199,7 @@ export async function createBooking(formData: FormData) {
             // paid_amount: 0, // No longer set manually
             notes: notes || null,
             status: status ? String(status) : 'scheduled',
+            token: crypto.randomUUID(),
             created_by: user.id
         })
 
@@ -215,6 +219,25 @@ export async function updateBookingStatus(id: number, status: string) {
         .eq('id', id)
 
     if (error) return { message: error.message }
+
+    // Send Email if Cancelled
+    if (status === 'cancelled') {
+        const { data: booking } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                service:services(name),
+                branch:branches(name, phone, slug),
+                customer:customers(name, email)
+            `)
+            .eq('id', id)
+            .single()
+
+        if (booking && booking.customer?.email) {
+            await sendBookingCancellationEmail(booking) // Default to 'ar' for dashboard actions
+        }
+    }
+
     revalidatePath('/dashboard/bookings')
     return { success: true }
 }
@@ -264,6 +287,27 @@ export async function updateBooking(id: number, formData: FormData) {
         .eq('id', id)
 
     if (error) return { message: error.message }
+
+    // Send Email if Cancelled AND requested
+    const shouldSendEmail = formData.get('should_send_email') === 'true'
+
+    if (status === 'cancelled' && shouldSendEmail) {
+        const { data: booking } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                service:services(name),
+                branch:branches(name, phone, slug),
+                customer:customers(name, email)
+            `)
+            .eq('id', id)
+            .single()
+
+        if (booking && booking.customer?.email) {
+            await sendBookingCancellationEmail(booking) // Bilingual
+        }
+    }
+
     revalidatePath('/dashboard/bookings')
     return { success: true }
 }

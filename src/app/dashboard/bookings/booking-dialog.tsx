@@ -9,6 +9,16 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -73,6 +83,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
     const [isVoucherDialogOpen, setIsVoucherDialogOpen] = useState(false)
     const [isVoucherListOpen, setIsVoucherListOpen] = useState(false)
     const [voucherToEdit, setVoucherToEdit] = useState<any>(undefined)
+
+    // Email Confirmation State
+    const [showEmailAlert, setShowEmailAlert] = useState(false)
 
     const [allCustomers, setAllCustomers] = useState<any[]>([])
     const [bookingVouchers, setBookingVouchers] = useState<any[]>([])
@@ -257,6 +270,20 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
     const handleSubmit = async () => {
         if (!validate()) return
 
+        // Interactive Cancellation Email Logic: Check if we need to confirm
+        if (bookingData.status === 'cancelled' && bookingToEdit) {
+            const customerEmail = selectedCustomer?.email || bookingToEdit.customer?.email
+            if (customerEmail) {
+                setShowEmailAlert(true)
+                return // Stop here, wait for dialog interaction
+            }
+        }
+
+        // If no email or not cancelled, just proceed with false
+        await proceedSubmission(false)
+    }
+
+    const proceedSubmission = async (shouldSendEmail: boolean) => {
         setIsLoading(true)
 
         let startTimeISO = ''
@@ -298,6 +325,9 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
             formData.append('half_hour_price', bookingData.half_hour_price)
         }
         if (bookingData.notes) formData.append('notes', bookingData.notes)
+
+        // Append Email Flag
+        formData.append('should_send_email', shouldSendEmail ? 'true' : 'false')
 
         const result = bookingToEdit
             ? await updateBooking(bookingToEdit.id, formData)
@@ -631,11 +661,34 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
                                         <SelectItem value="scheduled">{dict.dashboard.bookings.statuses.scheduled}</SelectItem>
+                                        <SelectItem value="under_review">{dict.dashboard.bookings.statuses.under_review || (lang === 'ar' ? "قيد المراجعة" : "Under Review")}</SelectItem>
                                         <SelectItem value="completed">{dict.dashboard.bookings.statuses.completed}</SelectItem>
                                         <SelectItem value="cancelled">{dict.dashboard.bookings.statuses.cancelled}</SelectItem>
-                                        <SelectItem value="no_show">{dict.dashboard.bookings.statuses.no_show}</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                {bookingData.status === 'cancelled' && (
+                                    <div className="bg-blue-50 p-2 rounded text-xs text-blue-700 mt-1">
+                                        {lang === 'ar' ? (
+                                            <>
+                                                <strong>ملاحظة هامة حول الإلغاء:</strong>
+                                                <ul className="list-disc list-inside mt-1 space-y-1">
+                                                    <li>عند الحفظ، سيتم سؤالك عما إذا كنت تريد إرسال بريد إلكتروني للعميل.</li>
+                                                    <li>الإيميل يظهر تفاصيل الحجز وسبب الإلغاء.</li>
+                                                    <li>إذا <strong>أخطأت</strong> ولم ترسل الإيميل، قم بحفظه اخرى وسيت سوالك مجدد.</li>
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <strong>Cancellation Note:</strong>
+                                                <ul className="list-disc list-inside mt-1 space-y-1">
+                                                    <li>On save, you will be asked if you want to send an email to the customer.</li>
+                                                    <li>The email link shows booking details and cancellation reason.</li>
+                                                    <li>If you <strong>missed</strong> sending the email, change status to "Scheduled" and save, then change back to "Cancelled" and save again to trigger the prompt.</li>
+                                                </ul>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
 
@@ -878,6 +931,36 @@ export function BookingDialog({ open, onOpenChange, branches, services, dict, la
                 )
             }
 
+            <AlertDialog open={showEmailAlert} onOpenChange={setShowEmailAlert}>
+                <AlertDialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'} className="sm:max-w-[500px]">
+                    <button
+                        onClick={() => setShowEmailAlert(false)}
+                        className={`absolute top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground ${lang === 'ar' ? 'left-4' : 'right-4'}`}
+                    >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
+                    </button>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{lang === 'ar' ? "إرسال ايميل الإلغاء؟" : "Send Cancellation Email?"}</AlertDialogTitle>
+                        <AlertDialogDescription className="whitespace-pre-wrap">
+                            {lang === 'ar'
+                                ? `هل تود إرسال بريد إلكتروني تفصيلي للعميل لإبلاغه بالإلغاء؟ سيتم استخدام ملاحظات الحجز كسبب للإلغاء.\nالسبب : ${bookingData.notes || 'غير محدد'}`
+                                : `Do you want to send a detailed email to the customer notifying them of the cancellation? The cancellation reason will be the booking notes.\nReason: ${bookingData.notes || 'Undefined'}`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 sm:gap-2 flex-col sm:flex-row">
+                        <AlertDialogAction onClick={() => { setShowEmailAlert(false); proceedSubmission(true); }}>
+                            {lang === 'ar' ? "نعم، أرسل الإيميل واحفظ" : "Yes, Send Email & Save"}
+                        </AlertDialogAction>
+                        <Button variant="outline" onClick={() => { setShowEmailAlert(false); proceedSubmission(false); }}>
+                            {lang === 'ar' ? "لا، فقط احفظ" : "No, Just Save"}
+                        </Button>
+                        <AlertDialogCancel onClick={() => setShowEmailAlert(false)}>
+                            {lang === 'ar' ? "إغلاق" : "Close"}
+                        </AlertDialogCancel>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     )
 }

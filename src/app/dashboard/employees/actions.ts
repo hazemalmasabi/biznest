@@ -153,8 +153,8 @@ export async function deleteEmployee(employeeId: string) {
             return { error: 'Permission denied: You can only delete employees in your branch' }
         }
 
-        if (targetProfile.role === 'owner') {
-            return { error: 'Permission denied: Cannot delete owner' }
+        if (targetProfile.role === 'owner' || targetProfile.role === 'manager') {
+            return { error: 'Permission denied: You do not have permission to delete this user level.' }
         }
     }
 

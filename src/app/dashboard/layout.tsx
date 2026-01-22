@@ -48,7 +48,9 @@ export default async function DashboardLayout({
             .select('role')
             .eq('user_id', user.id)
             .single()
-        sidebarRole = membership?.role
+        if (membership) {
+            sidebarRole = membership.role
+        }
     }
 
     return (

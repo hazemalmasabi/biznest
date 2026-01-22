@@ -15,7 +15,7 @@ export type DashboardStats = {
         scheduled: StatItem
         completed: StatItem
         cancelled: StatItem
-        no_show: StatItem
+        under_review: StatItem
     }
     vouchers: {
         total_receipts: number
@@ -91,7 +91,7 @@ export async function getDashboardStats(dateFrom: string, dateTo: string, branch
             scheduled: { count: 0, value: 0, remaining: 0 },
             completed: { count: 0, value: 0, remaining: 0 },
             cancelled: { count: 0, value: 0, remaining: 0 },
-            no_show: { count: 0, value: 0, remaining: 0 }
+            under_review: { count: 0, value: 0, remaining: 0 }
         },
         vouchers: { total_receipts: 0, total_payments: 0, total_refunds: 0, net: 0 }
     }
@@ -103,7 +103,7 @@ export async function getDashboardStats(dateFrom: string, dateTo: string, branch
             scheduled: { count: 0, value: 0, remaining: 0 },
             completed: { count: 0, value: 0, remaining: 0 },
             cancelled: { count: 0, value: 0, remaining: 0 },
-            no_show: { count: 0, value: 0, remaining: 0 }
+            under_review: { count: 0, value: 0, remaining: 0 }
         },
         vouchers: { total_receipts: 0, total_payments: 0, total_refunds: 0, net: 0 }
     }
@@ -170,7 +170,7 @@ export async function getDashboardStats(dateFrom: string, dateTo: string, branch
         scheduled: calculateStat('scheduled'),
         completed: calculateStat('completed'),
         cancelled: calculateStat('cancelled'),
-        no_show: calculateStat('no_show'),
+        under_review: calculateStat('under_review'),
     }
 
     // --- Vouchers Query ---

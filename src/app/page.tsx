@@ -7,7 +7,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default async function LandingPage() {
   const cookieStore = await cookies()
-  const lang = (cookieStore.get('NEXT_LOCALE')?.value || 'en') as Locale
+  const lang = (cookieStore.get('NEXT_LOCALE')?.value || 'ar') as Locale
   const dict = dictionaries[lang]
 
   return (

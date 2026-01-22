@@ -10,13 +10,14 @@ export default async function BranchesPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    const { data: membership } = await supabase
-        .from('business_members')
-        .select('role')
-        .eq('user_id', user.id)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, branch_id')
+        .eq('id', user.id)
         .single()
 
-    if (membership?.role !== 'owner') {
+    // Redirect if not owner or manager
+    if (profile?.role !== 'owner' && profile?.role !== 'manager') {
         redirect('/dashboard')
     }
 
@@ -24,10 +25,16 @@ export default async function BranchesPage() {
     const lang = (cookieStore.get('NEXT_LOCALE')?.value || 'en') as Locale
     const dict = dictionaries[lang]
 
-    const [branches, totalBranches] = await Promise.all([
+    let [branches, totalBranches] = await Promise.all([
         getBranches(),
         getBranchesCount()
     ])
+
+    // Filter for Managers: Only show their branch
+    if (profile?.role === 'manager' && profile.branch_id) {
+        branches = branches.filter(b => b.id === profile.branch_id)
+        totalBranches = branches.length
+    }
 
     return (
         <BranchList
@@ -35,6 +42,7 @@ export default async function BranchesPage() {
             totalBranches={totalBranches}
             dict={dict}
             lang={lang}
+            userRole={profile?.role}
         />
     )
 }

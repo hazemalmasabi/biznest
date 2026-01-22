@@ -145,7 +145,6 @@ export function CustomerList({ initialCustomers, dict, lang, userRole }: Custome
                             <TableHead className="text-start">{dict.dashboard.customers.phone_label}</TableHead>
                             <TableHead className="text-start">{dict.dashboard.customers.email_label}</TableHead>
                             <TableHead className="text-center">{dict.dashboard.customers.gender_label}</TableHead>
-                            <TableHead className="text-center">{dict.dashboard.customers.gender_label}</TableHead>
                             <TableHead className="text-center">{dict.dashboard.customers.dob_label}</TableHead>
                             <TableHead className="text-center">{dict.dashboard.customers.bookings_label || (lang === 'ar' ? "الحجوزات" : "Bookings")}</TableHead>
                             <TableHead className="text-end">{dict.dashboard.common.actions}</TableHead>
@@ -165,9 +164,6 @@ export function CustomerList({ initialCustomers, dict, lang, userRole }: Custome
                                     <TableCell className="text-center">
                                         {customer.gender === 'male' ? dict.dashboard.customers.gender_male :
                                             customer.gender === 'female' ? dict.dashboard.customers.gender_female : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center font-sans">
-                                        {customer.date_of_birth || '-'}
                                     </TableCell>
                                     <TableCell className="text-center font-sans">
                                         {customer.date_of_birth || '-'}

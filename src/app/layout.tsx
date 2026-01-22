@@ -29,7 +29,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies()
-  const lang = cookieStore.get('NEXT_LOCALE')?.value || 'en'
+  const lang = cookieStore.get('NEXT_LOCALE')?.value || 'ar'
   const dir = lang === 'ar' ? 'rtl' : 'ltr'
 
   return (

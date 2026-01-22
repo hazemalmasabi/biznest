@@ -32,7 +32,7 @@ export function Sidebar({ dict, lang, role }: SidebarProps) {
         { href: '/dashboard/help', label: dict?.help?.title || "Help", icon: HelpCircle },
     ]
 
-    const navItems = allNavItems.filter(item => item.href !== '/dashboard/branches' || role === 'owner')
+    const navItems = allNavItems.filter(item => item.href !== '/dashboard/branches' || role === 'owner' || role === 'manager')
 
     const handleLogout = async () => {
         await supabase.auth.signOut()

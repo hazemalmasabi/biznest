@@ -90,7 +90,7 @@ export function HelpContent({ dict, lang }: HelpContentProps) {
                                                         <TableHeader>
                                                             <TableRow className="bg-muted/50">
                                                                 {section.table.headers.map((header: string, i: number) => (
-                                                                    <TableHead key={i} className={`font-bold ${i === 0 ? 'w-[40%]' : 'text-center'}`}>
+                                                                    <TableHead key={i} className={`font-bold ${i === 0 ? 'w-[40%] text-center' : 'text-center'}`}>
                                                                         {header}
                                                                     </TableHead>
                                                                 ))}

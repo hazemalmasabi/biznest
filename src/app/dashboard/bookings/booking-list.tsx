@@ -26,7 +26,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { MoreHorizontal, Plus, Search, Calendar, Clock, User, CheckCircle, XCircle, ArrowLeft, ArrowRight, Pencil, Trash2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { MoreHorizontal, Plus, Search, Calendar, Clock, User, CheckCircle, XCircle, ArrowLeft, ArrowRight, Pencil, Trash2, Share2, Copy } from 'lucide-react'
 import { BookingDialog } from './booking-dialog'
 import { Badge } from "@/components/ui/badge"
 import { format } from 'date-fns'
@@ -63,6 +65,8 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
     const [currentPage, setCurrentPage] = useState(1)
     const [deleteId, setDeleteId] = useState<number | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [isShareOpen, setIsShareOpen] = useState(false)
+    const [shareUrl, setShareUrl] = useState('')
 
     // Filters State
     // Set default date range to today (Local Time)
@@ -84,8 +88,8 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
     const employees = Array.from(new Set(
         initialBookings
             .filter(b => selectedBranch === 'all' || b.branch_id.toString() === selectedBranch)
-            .map(b => b.created_by?.full_name)
-            .filter(Boolean)
+            .filter(b => selectedBranch === 'all' || b.branch_id.toString() === selectedBranch)
+            .map(b => b.created_by?.full_name || 'online_booking')
     ))
 
     // Filter bookings
@@ -98,7 +102,9 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
         const matchesBranch = selectedBranch === 'all' || booking.branch_id.toString() === selectedBranch
         const matchesService = selectedService === 'all' || booking.service_id.toString() === selectedService
         const matchesStatus = selectedStatus === 'all' || booking.status === selectedStatus
-        const matchesEmployee = selectedEmployee === 'all' || booking.created_by?.full_name === selectedEmployee
+        const matchesEmployee = selectedEmployee === 'all' ||
+            (selectedEmployee === 'online_booking' ? !booking.created_by : booking.created_by?.full_name === selectedEmployee)
+
 
         const bookingDate = new Date(booking.start_time).toLocaleDateString('en-CA')
         const matchesDateFrom = !dateFrom || bookingDate >= dateFrom
@@ -141,6 +147,15 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
         setDeleteId(id)
     }
 
+    const handleShare = (booking: Booking) => {
+        if (!booking.token || !booking.branch) return
+        // Assuming branch has slug. If type doesn't have it, we cast or update type.
+        // We need to ensure the type has it.
+        const url = `${window.location.origin}/${(booking.branch as any).slug}/${booking.token}`
+        setShareUrl(url)
+        setIsShareOpen(true)
+    }
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'scheduled':
@@ -149,8 +164,8 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                 return <Badge variant="outline" className="text-green-600 border-green-600">{dict.dashboard.bookings?.statuses?.completed || (lang === 'ar' ? "مكتمل" : "Completed")}</Badge>
             case 'cancelled':
                 return <Badge variant="outline" className="text-red-600 border-red-600">{dict.dashboard.bookings?.statuses?.cancelled || (lang === 'ar' ? "ملغي" : "Cancelled")}</Badge>
-            case 'no_show':
-                return <Badge variant="outline" className="text-orange-600 border-orange-600">{dict.dashboard.bookings?.statuses?.no_show || (lang === 'ar' ? "لا يوجد عرض" : "No Show")}</Badge>
+            case 'under_review':
+                return <Badge variant="outline" className="text-amber-600 border-amber-600 font-medium bg-amber-50">{dict.dashboard.bookings?.statuses?.under_review || (lang === 'ar' ? "قيد المراجعة" : "Under Review")}</Badge>
             default:
                 return <Badge variant="outline">{status}</Badge>
         }
@@ -175,7 +190,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
         scheduled: calculateStat('scheduled'),
         completed: calculateStat('completed'),
         cancelled: calculateStat('cancelled'),
-        no_show: calculateStat('no_show'),
+        under_review: calculateStat('under_review'),
     }
 
     return (
@@ -189,7 +204,7 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card>
-                    <CardContent className="p-4 flex flex-col items-center justify-center">
+                    <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-slate-300">
                         <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.total_bookings}</p>
                         <p className="text-2xl font-bold mb-2">{stats.total.count}</p>
                         <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
@@ -201,6 +216,24 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                 <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
                                 <span className={`font-medium ${stats.total.remaining > 0 ? 'text-red-600' : stats.total.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
                                     {stats.total.remaining.toLocaleString('en-US')}
+                                </span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-amber-500">
+                        <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.statuses?.under_review || (lang === 'ar' ? "قيد المراجعة" : "Under Review")}</p>
+                        <p className="text-2xl font-bold text-amber-600 mb-2">{stats.under_review.count}</p>
+                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                <span className="font-medium text-foreground">{stats.under_review.value.toLocaleString('en-US')}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                <span className={`font-medium ${stats.under_review.remaining > 0 ? 'text-red-600' : stats.under_review.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                    {stats.under_review.remaining.toLocaleString('en-US')}
                                 </span>
                             </div>
                         </div>
@@ -260,24 +293,6 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-gray-500">
-                        <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings.stats.no_show}</p>
-                        <p className="text-2xl font-bold text-gray-600 mb-2">{stats.no_show.count}</p>
-                        <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
-                            <div className="flex flex-col items-center">
-                                <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
-                                <span className="font-medium text-foreground">{stats.no_show.value.toLocaleString('en-US')}</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                                <span className={`font-medium ${stats.no_show.remaining > 0 ? 'text-red-600' : stats.no_show.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
-                                    {stats.no_show.remaining.toLocaleString('en-US')}
-                                </span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -329,9 +344,9 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                     <SelectContent className="bg-white">
                         <SelectItem value="all">{dict.dashboard.bookings.filters?.all_statuses || "All Statuses"}</SelectItem>
                         <SelectItem value="scheduled">{dict.dashboard.bookings.statuses.scheduled}</SelectItem>
+                        <SelectItem value="under_review">{dict.dashboard.bookings?.statuses?.under_review || (lang === 'ar' ? "قيد المراجعة" : "Under Review")}</SelectItem>
                         <SelectItem value="completed">{dict.dashboard.bookings.statuses.completed}</SelectItem>
                         <SelectItem value="cancelled">{dict.dashboard.bookings.statuses.cancelled}</SelectItem>
-                        <SelectItem value="no_show">{dict.dashboard.bookings.statuses.no_show}</SelectItem>
                     </SelectContent>
                 </Select>
 
@@ -387,7 +402,9 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                     <SelectContent className="bg-white">
                         <SelectItem value="all">{dict.dashboard.bookings.filters?.all_employees || "All Employees"}</SelectItem>
                         {employees.map(employee => (
-                            <SelectItem key={employee as string} value={employee as string}>{employee as string}</SelectItem>
+                            <SelectItem key={employee as string} value={employee as string}>
+                                {employee === 'online_booking' ? (lang === 'ar' ? "حجز من الموقع" : "Online Booking") : employee as string}
+                            </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -538,7 +555,9 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                             {getStatusBadge(booking.status)}
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            <span className="text-sm text-muted-foreground">{booking.created_by?.full_name || '-'}</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                {booking.created_by?.full_name || (lang === 'ar' ? "حجز من الموقع" : "Online Booking")}
+                                            </span>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <div className="flex items-center justify-center gap-2">
@@ -548,6 +567,14 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                                                     onClick={() => { setBookingToEdit(booking); setIsDialogOpen(true) }}
                                                 >
                                                     <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleShare(booking)}
+                                                    title={lang === 'ar' ? "مشاركة" : "Share"}
+                                                >
+                                                    <Share2 className="h-4 w-4 text-blue-600" />
                                                 </Button>
                                                 {(userRole === 'owner' || userRole === 'manager') && (
                                                     <Button
@@ -594,6 +621,44 @@ export function BookingList({ initialBookings, branches, services, dict, lang, u
                     </div>
                 )
             }
+
+            <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+                <DialogContent className="sm:max-w-md bg-white text-slate-900" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                    <DialogHeader>
+                        <DialogTitle>{lang === 'ar' ? 'مشاركة الحجز' : 'Share Booking'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center space-y-4 py-4">
+                        <div className="border p-2 rounded-lg bg-white shadow-sm">
+                            {/* QR Code using external API for simplicity without installing new packages */}
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`}
+                                alt="Booking QR Code"
+                                className="w-48 h-48 object-contain"
+                            />
+                        </div>
+                        <div className="flex items-center space-x-2 w-full gap-2">
+                            <div className="grid flex-1 gap-2">
+                                <Label htmlFor="link" className="sr-only">
+                                    Link
+                                </Label>
+                                <Input
+                                    id="link"
+                                    defaultValue={shareUrl}
+                                    readOnly
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <Button type="submit" size="sm" className="px-3" onClick={() => {
+                                navigator.clipboard.writeText(shareUrl)
+                                alert(lang === 'ar' ? "تم النسخ!" : "Copied!")
+                            }}>
+                                <span className="sr-only">Copy</span>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <BookingDialog
                 open={isDialogOpen}

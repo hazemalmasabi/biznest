@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Search, Pencil, Trash2, Loader2, Package, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import {
     Select,
     SelectContent,
@@ -43,6 +44,8 @@ interface Service {
     duration: 'hour' | 'day' | 'open'
     created_at: string
     status: 'active' | 'maintenance' | 'closed'
+    image_url?: string | null
+    description?: string | null
     branches?: { name: string } | { name: string }[] | null
 }
 
@@ -237,28 +240,42 @@ export function ServiceList({ initialServices, branches, dict, lang, userRole, u
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="text-start w-[100px]">{dict.dashboard?.services?.image_label || "صورة الخدمة"}</TableHead>
                             <TableHead className="text-start">{dict.dashboard?.services?.name_label}</TableHead>
                             <TableHead className="text-center">{dict.dashboard?.services?.status_label}</TableHead>
                             <TableHead className="text-start">{dict.dashboard?.services?.branch_label}</TableHead>
                             <TableHead className="text-start">{dict.dashboard?.services?.price_label}</TableHead>
                             <TableHead className="text-center">{dict.dashboard?.services?.duration_label}</TableHead>
-                            <TableHead className="text-start">{dict.dashboard?.services?.created_at || "Creation Date"}</TableHead>
+                            <TableHead className="text-start">{dict.dashboard?.services?.created_at || "تاريخ الإنشاء"}</TableHead>
                             <TableHead className="text-end">{dict.dashboard?.common?.actions}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {paginatedServices.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                                     {dict.dashboard?.services?.no_services_found}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             paginatedServices.map((service) => (
                                 <TableRow key={service.id} className="hover:bg-slate-50/50">
+                                    <TableCell>
+                                        <div className="h-14 w-14 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
+                                            {service.image_url ? (
+                                                <img
+                                                    src={service.image_url}
+                                                    alt={service.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <Package className="h-5 w-5 text-slate-400" />
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="font-medium">{service.name}</TableCell>
                                     <TableCell className="text-center">
-                                        <Badge className={getStatusColor(service.status)} variant="secondary">
+                                        <Badge className={cn("px-2 py-0.5", getStatusColor(service.status))} variant="secondary">
                                             {getStatusLabel(service.status)}
                                         </Badge>
                                     </TableCell>
@@ -273,7 +290,7 @@ export function ServiceList({ initialServices, branches, dict, lang, userRole, u
                                             {getDurationLabel(service.duration)}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-muted-foreground font-sans">
+                                    <TableCell className="text-muted-foreground font-sans text-xs">
                                         {formatDate(service.created_at)}
                                     </TableCell>
                                     <TableCell className="text-right">

@@ -117,18 +117,36 @@ export function DashboardClient({ initialStats, branches, userProfile, dict, lan
                 <h2 className="text-xl font-semibold tracking-tight">{dict.dashboard.bookings?.title || "Bookings"}</h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <Card>
-                        <CardContent className="p-4 flex flex-col items-center justify-center">
+                        <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-slate-300">
                             <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.stats?.total_bookings || "Total Bookings"}</p>
-                            <p className="text-2xl font-bold mb-2">{stats.bookings.total.count}</p>
+                            <p className="text-2xl font-bold mb-2">{stats.bookings?.total?.count ?? 0}</p>
                             <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
-                                    <span className="font-medium text-foreground">{stats.bookings.total.value.toLocaleString('en-US')}</span>
+                                    <span className="font-medium text-foreground">{stats.bookings?.total?.value?.toLocaleString('en-US') ?? 0}</span>
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                                    <span className={`font-medium ${stats.bookings.total.remaining > 0 ? 'text-red-600' : stats.bookings.total.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
-                                        {stats.bookings.total.remaining.toLocaleString('en-US')}
+                                    <span className={`font-medium ${(stats.bookings?.total?.remaining ?? 0) > 0 ? 'text-red-600' : (stats.bookings?.total?.remaining ?? 0) < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                        {stats.bookings?.total?.remaining?.toLocaleString('en-US') ?? 0}
+                                    </span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-amber-500">
+                            <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.statuses?.under_review || (lang === 'ar' ? "قيد المراجعة" : "Under Review")}</p>
+                            <p className="text-2xl font-bold text-amber-600 mb-2">{stats.bookings?.under_review?.count ?? 0}</p>
+                            <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
+                                    <span className="font-medium text-foreground">{stats.bookings?.under_review?.value?.toLocaleString('en-US') ?? 0}</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                                    <span className={`font-medium ${(stats.bookings?.under_review?.remaining ?? 0) > 0 ? 'text-red-600' : (stats.bookings?.under_review?.remaining ?? 0) < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                        {stats.bookings?.under_review?.remaining?.toLocaleString('en-US') ?? 0}
                                     </span>
                                 </div>
                             </div>
@@ -137,16 +155,16 @@ export function DashboardClient({ initialStats, branches, userProfile, dict, lan
                     <Card>
                         <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-blue-500">
                             <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.stats?.scheduled || "Scheduled"}</p>
-                            <p className="text-2xl font-bold text-blue-600 mb-2">{stats.bookings.scheduled.count}</p>
+                            <p className="text-2xl font-bold text-blue-600 mb-2">{stats.bookings?.scheduled?.count ?? 0}</p>
                             <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
-                                    <span className="font-medium text-foreground">{stats.bookings.scheduled.value.toLocaleString('en-US')}</span>
+                                    <span className="font-medium text-foreground">{stats.bookings?.scheduled?.value?.toLocaleString('en-US') ?? 0}</span>
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                                    <span className={`font-medium ${stats.bookings.scheduled.remaining > 0 ? 'text-red-600' : stats.bookings.scheduled.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
-                                        {stats.bookings.scheduled.remaining.toLocaleString('en-US')}
+                                    <span className={`font-medium ${(stats.bookings?.scheduled?.remaining ?? 0) > 0 ? 'text-red-600' : (stats.bookings?.scheduled?.remaining ?? 0) < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                        {stats.bookings?.scheduled?.remaining?.toLocaleString('en-US') ?? 0}
                                     </span>
                                 </div>
                             </div>
@@ -155,16 +173,16 @@ export function DashboardClient({ initialStats, branches, userProfile, dict, lan
                     <Card>
                         <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-green-500">
                             <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.stats?.completed || "Completed"}</p>
-                            <p className="text-2xl font-bold text-green-600 mb-2">{stats.bookings.completed.count}</p>
+                            <p className="text-2xl font-bold text-green-600 mb-2">{stats.bookings?.completed?.count ?? 0}</p>
                             <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
-                                    <span className="font-medium text-foreground">{stats.bookings.completed.value.toLocaleString('en-US')}</span>
+                                    <span className="font-medium text-foreground">{stats.bookings?.completed?.value?.toLocaleString('en-US') ?? 0}</span>
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                                    <span className={`font-medium ${stats.bookings.completed.remaining > 0 ? 'text-red-600' : stats.bookings.completed.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
-                                        {stats.bookings.completed.remaining.toLocaleString('en-US')}
+                                    <span className={`font-medium ${(stats.bookings?.completed?.remaining ?? 0) > 0 ? 'text-red-600' : (stats.bookings?.completed?.remaining ?? 0) < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                        {stats.bookings?.completed?.remaining?.toLocaleString('en-US') ?? 0}
                                     </span>
                                 </div>
                             </div>
@@ -173,34 +191,16 @@ export function DashboardClient({ initialStats, branches, userProfile, dict, lan
                     <Card>
                         <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-red-500">
                             <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.stats?.cancelled || "Cancelled"}</p>
-                            <p className="text-2xl font-bold text-red-600 mb-2">{stats.bookings.cancelled.count}</p>
+                            <p className="text-2xl font-bold text-red-600 mb-2">{stats.bookings?.cancelled?.count ?? 0}</p>
                             <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
-                                    <span className="font-medium text-foreground">{stats.bookings.cancelled.value.toLocaleString('en-US')}</span>
+                                    <span className="font-medium text-foreground">{stats.bookings?.cancelled?.value?.toLocaleString('en-US') ?? 0}</span>
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                                    <span className={`font-medium ${stats.bookings.cancelled.remaining > 0 ? 'text-red-600' : stats.bookings.cancelled.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
-                                        {stats.bookings.cancelled.remaining.toLocaleString('en-US')}
-                                    </span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-4 flex flex-col items-center justify-center border-l-4 border-l-gray-500">
-                            <p className="text-sm font-medium text-muted-foreground">{dict.dashboard.bookings?.stats?.no_show || "No Show"}</p>
-                            <p className="text-2xl font-bold text-gray-600 mb-2">{stats.bookings.no_show.count}</p>
-                            <div className="flex w-full justify-around items-center text-xs sm:text-sm border-t pt-2">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-muted-foreground">{lang === 'ar' ? 'القيمة' : 'Value'}</span>
-                                    <span className="font-medium text-foreground">{stats.bookings.no_show.value.toLocaleString('en-US')}</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-muted-foreground">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                                    <span className={`font-medium ${stats.bookings.no_show.remaining > 0 ? 'text-red-600' : stats.bookings.no_show.remaining < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
-                                        {stats.bookings.no_show.remaining.toLocaleString('en-US')}
+                                    <span className={`font-medium ${(stats.bookings?.cancelled?.remaining ?? 0) > 0 ? 'text-red-600' : (stats.bookings?.cancelled?.remaining ?? 0) < 0 ? 'text-yellow-600' : 'text-foreground'}`}>
+                                        {stats.bookings?.cancelled?.remaining?.toLocaleString('en-US') ?? 0}
                                     </span>
                                 </div>
                             </div>

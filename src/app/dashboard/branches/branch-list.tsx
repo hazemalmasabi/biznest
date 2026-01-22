@@ -32,9 +32,10 @@ type BranchListProps = {
     totalBranches: number
     dict: any
     lang: string
+    userRole?: string
 }
 
-export function BranchList({ initialBranches, totalBranches, dict, lang }: BranchListProps) {
+export function BranchList({ initialBranches, totalBranches, dict, lang, userRole }: BranchListProps) {
     // REFACTOR: Removed local 'branches' state. 
     // We use initialBranches directly so that when the server revalidates and passes new props, 
     // the UI updates immediately.
@@ -83,10 +84,21 @@ export function BranchList({ initialBranches, totalBranches, dict, lang }: Branc
 
     const handleDelete = async () => {
         if (deleteId) {
-            startDeleteTransition(async () => {
-                await deleteBranch(deleteId)
+            const branchToDelete = filteredBranches.find(b => b.id === deleteId)
+            if (branchToDelete?.is_main) {
+                alert(lang === 'ar' ? 'لا يمكن حذف الفرع الرئيسي' : 'Cannot delete the main branch')
                 setDeleteId(null)
-                router.refresh()
+                return
+            }
+
+            startDeleteTransition(async () => {
+                const result = await deleteBranch(deleteId)
+                if (result?.error) {
+                    alert(lang === 'ar' ? `خطأ في الحذف: ${result.error}` : `Error deleting: ${result.error}`)
+                } else {
+                    router.refresh()
+                }
+                setDeleteId(null)
             })
         }
     }
@@ -135,10 +147,12 @@ export function BranchList({ initialBranches, totalBranches, dict, lang }: Branc
                         onChange={handleSearch}
                     />
                 </div>
-                <Button onClick={handleAdd}>
-                    <Plus className="mr-2 h-4 w-4 rtl:ml-2 rtl:mr-0" />
-                    {dict.dashboard.branches.add_branch}
-                </Button>
+                {userRole === 'owner' && (
+                    <Button onClick={handleAdd}>
+                        <Plus className="mr-2 h-4 w-4 rtl:ml-2 rtl:mr-0" />
+                        {dict.dashboard.branches.add_branch}
+                    </Button>
+                )}
             </div>
 
             {/* Table Section */}
@@ -146,7 +160,9 @@ export function BranchList({ initialBranches, totalBranches, dict, lang }: Branc
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[50px]"></TableHead>
                             <TableHead className="text-start">{dict.dashboard.branches.name}</TableHead>
+                            <TableHead className="text-start">{lang === 'ar' ? 'الرابط المختصر' : 'Slug'}</TableHead>
                             <TableHead className="text-start">{dict.dashboard.branches.address}</TableHead>
                             <TableHead className="text-start w-[150px]">{dict.dashboard.branches.phone}</TableHead>
                             <TableHead className="text-center w-[100px]">{dict.dashboard.branches.is_main}</TableHead>
@@ -158,7 +174,17 @@ export function BranchList({ initialBranches, totalBranches, dict, lang }: Branc
                         {paginatedBranches.length > 0 ? (
                             paginatedBranches.map((branch) => (
                                 <TableRow key={branch.id}>
+                                    <TableCell>
+                                        <div className="h-10 w-10 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
+                                            {(branch as any).image_url ? (
+                                                <img src={(branch as any).image_url} alt={branch.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <Building2 className="h-5 w-5 text-slate-400" />
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="font-medium">{branch.name}</TableCell>
+                                    <TableCell className="text-muted-foreground">{branch.slug || '-'}</TableCell>
                                     <TableCell>{branch.address || '-'}</TableCell>
                                     <TableCell className="text-start">
                                         {/* Force LTR direction for phone numbers to display correctly + digits in English */}
@@ -179,17 +205,19 @@ export function BranchList({ initialBranches, totalBranches, dict, lang }: Branc
                                                 <Pencil className="h-4 w-4" />
                                                 <span className="sr-only">{dict.dashboard.common.edit}</span>
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setDeleteId(branch.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                                <span className="sr-only">{dict.dashboard.common.delete}</span>
-                                            </Button>
+                                            {userRole === 'owner' && (
+                                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setDeleteId(branch.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">{dict.dashboard.common.delete}</span>
+                                                </Button>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     {dict.dashboard.branches.no_branches_found || (lang === 'ar' ? 'لا توجد فروع' : 'No branches found.')}
                                 </TableCell>
                             </TableRow>
@@ -233,6 +261,7 @@ export function BranchList({ initialBranches, totalBranches, dict, lang }: Branc
                 branchToEdit={editingBranch}
                 dict={dict}
                 lang={lang}
+                userRole={userRole}
             />
 
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
