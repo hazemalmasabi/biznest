@@ -4,9 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   compiler: {
-    removeConsole: {
-      exclude: [],
-    },
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: [] } : false,
   },
   images: {
     remotePatterns: [

@@ -18,7 +18,7 @@ import { useParams } from 'next/navigation'
 import { Globe } from 'lucide-react'
 import { publicDictionary } from '@/app/(public)/dictionaries'
 
-import { getPublicBranchBookings, createPublicBooking, sendVerificationCode, verifyVerificationCode } from '@/app/(public)/actions'
+import { getPublicBranchBookings, createPublicBooking, sendVerificationCode, verifyVerificationCode, initiatePayment } from '@/app/(public)/actions'
 
 // Helper Types
 type Service = {
@@ -64,9 +64,14 @@ interface PublicBookingClientProps {
     services: Service[]
     durations: ServiceDuration[]
     workingHours: WorkingHour[]
+    paymentSettings?: {
+        is_enabled: boolean
+        deposit_percentage: number
+        branch_id: number
+    } | null
 }
 
-export function PublicBookingClient({ branch, services, durations: rawDurations, workingHours }: PublicBookingClientProps) {
+export function PublicBookingClient({ branch, services, durations: rawDurations, workingHours, paymentSettings }: PublicBookingClientProps) {
     const params = useParams()
     const slug = params.slug as string // Get slug from URL params
     // Sort durations by value ascending
@@ -93,6 +98,13 @@ export function PublicBookingClient({ branch, services, durations: rawDurations,
     const [isLoadingSlots, setIsLoadingSlots] = useState(false)
 
     // Step 3 Data
+
+    // Debug Payment Settings
+    useEffect(() => {
+        if (step === 5) {
+            console.log("Current Payment Settings:", paymentSettings)
+        }
+    }, [step, paymentSettings])
     const [clientName, setClientName] = useState('')
     const [clientPhone, setClientPhone] = useState('')
     const [clientEmail, setClientEmail] = useState('')
@@ -861,85 +873,127 @@ export function PublicBookingClient({ branch, services, durations: rawDurations,
                                     </p>
                                 </div>
 
-                                <div className="p-4 bg-gray-50 rounded-lg border text-right text-sm space-y-2">
-                                    <div className="font-semibold text-gray-900 mb-2">{t.booking.link_label}</div>
-                                    <div className="flex items-center gap-2 bg-white border rounded p-2 text-xs text-muted-foreground break-all" dir="ltr">
-                                        <Info className="w-3 h-3 shrink-0" />
-                                        {/* Use token here assuming successBooking contains token */}
-                                        {`${window.location.origin}/${slug}/${(successBooking as any).token}`}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-2">
-                                        {t.booking.keep_link_hint}
-                                    </div>
-                                </div>
+                                {/* Payment Options */}
+                                {paymentSettings?.is_enabled && (
+                                    <div className="space-y-4 pt-4 border-t">
+                                        <h3 className="font-semibold text-gray-900">{t.common.payment_options || "Payment Options"}</h3>
 
-                                <Button className="w-full" onClick={() => {
-                                    window.open(`${window.location.origin}/${slug}/${(successBooking as any).token}`, '_blank')
-                                }}>
-                                    {t.booking.view_details_btn}
-                                </Button>
+                                        <div className="grid gap-3">
+                                            {/* Full Payment */}
+                                            <Button
+                                                className="w-full bg-primary hover:bg-primary/90 h-12 text-lg"
+                                                onClick={async () => {
+                                                    const price = (successBooking as any).price || getBookingPrice() // getBookingPrice is mostly correct, but successBooking is safer if available
+                                                    const res = await initiatePayment(parseInt(successBooking.id), price, branch.id, 'full')
+                                                    if (res.url) window.location.href = res.url
+                                                    else if (res.error) alert(res.error)
+                                                }}
+                                            >
+                                                {t.common.pay_full || "Pay Full Amount"} ({formatPrice((successBooking as any).price || getBookingPrice())} {t.common.currency})
+                                            </Button>
+
+                                            {/* Deposit Payment */}
+                                            {Number(paymentSettings.deposit_percentage) > 0 && Number(paymentSettings.deposit_percentage) < 100 && (
+                                                <Button
+                                                    variant="outline"
+                                                    className="w-full h-12 text-lg border-primary text-primary hover:bg-primary/5"
+                                                    onClick={async () => {
+                                                        const price = (successBooking as any).price || getBookingPrice()
+                                                        const depositAmount = price * (Number(paymentSettings.deposit_percentage) / 100)
+                                                        const res = await initiatePayment(parseInt(successBooking.id), depositAmount, branch.id, 'deposit')
+                                                        if (res.url) window.location.href = res.url
+                                                        else if (res.error) alert(res.error)
+                                                    }}
+                                                >
+                                                    {t.common.pay_deposit || "Pay Deposit"} ({Number(paymentSettings.deposit_percentage)}%)
+                                                </Button>
+                                            )}
+                                            {t.common.pay_deposit || "Pay Deposit"} ({paymentSettings.deposit_percentage}%) - {formatPrice(((successBooking as any).price || getBookingPrice()) * (paymentSettings.deposit_percentage / 100))} {t.common.currency}
+                                        </Button>
+                                            )}
+                                    </div>
+                                    </div>
+                        )}
+
+                        <div className="p-4 bg-gray-50 rounded-lg border text-right text-sm space-y-2">
+                            <div className="font-semibold text-gray-900 mb-2">{t.booking.link_label}</div>
+                            <div className="flex items-center gap-2 bg-white border rounded p-2 text-xs text-muted-foreground break-all" dir="ltr">
+                                <Info className="w-3 h-3 shrink-0" />
+                                {/* Use token here assuming successBooking contains token */}
+                                {`${window.location.origin}/${slug}/${(successBooking as any).token}`}
                             </div>
+                            <div className="text-xs text-muted-foreground mt-2">
+                                {t.booking.keep_link_hint}
+                            </div>
+                        </div>
+
+                        <Button variant={paymentSettings?.is_enabled ? "outline" : "default"} className="w-full" onClick={() => {
+                            window.open(`${window.location.origin}/${slug}/${(successBooking as any).token}`, '_blank')
+                        }}>
+                            {paymentSettings?.is_enabled ? (t.common.pay_later || "Pay Later / View Details") : t.booking.view_details_btn}
+                        </Button>
+                    </div>
                         )}
 
 
-                    </div>
+                </div>
 
-                    <DialogFooter className="gap-2 sm:justify-end border-t pt-4 flex flex-col-reverse sm:flex-row">
-                        {step === 1 && (
-                            <Button className="w-full sm:w-auto" disabled={!selectedDate || !!dateError} onClick={handleNextStep}>
+                <DialogFooter className="gap-2 sm:justify-end border-t pt-4 flex flex-col-reverse sm:flex-row">
+                    {step === 1 && (
+                        <Button className="w-full sm:w-auto" disabled={!selectedDate || !!dateError} onClick={handleNextStep}>
+                            {t.common.next} <ChevronLeft className={`w-4 h-4 ${dir === 'rtl' ? 'mr-2' : 'ml-2 rotate-180'}`} />
+                        </Button>
+                    )}
+                    {step === 2 && (
+                        <>
+                            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(1)}>
+                                {t.common.back}
+                            </Button>
+                            <Button className="w-full sm:w-auto" disabled={!selectedTime} onClick={handleNextStep}>
                                 {t.common.next} <ChevronLeft className={`w-4 h-4 ${dir === 'rtl' ? 'mr-2' : 'ml-2 rotate-180'}`} />
                             </Button>
-                        )}
-                        {step === 2 && (
-                            <>
-                                <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(1)}>
-                                    {t.common.back}
-                                </Button>
-                                <Button className="w-full sm:w-auto" disabled={!selectedTime} onClick={handleNextStep}>
-                                    {t.common.next} <ChevronLeft className={`w-4 h-4 ${dir === 'rtl' ? 'mr-2' : 'ml-2 rotate-180'}`} />
-                                </Button>
-                            </>
-                        )}
-                        {step === 3 && (
-                            <>
-                                <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(2)}>
-                                    {t.common.back}
-                                </Button>
-                                <Button
-                                    className="w-full sm:w-auto"
-                                    disabled={!clientName || !clientPhone || !clientEmail || isSubmitting}
-                                    onClick={handleSendOTP}
-                                >
-                                    {isSubmitting ? t.booking.sending_btn : t.booking.send_otp_btn}
-                                </Button>
-                            </>
-                        )}
-                        {step === 4 && (
-                            <>
-                                <Button variant="ghost" className="w-full sm:w-auto" onClick={() => setStep(3)} disabled={isVerifying}>
-                                    {t.booking.change_email}
-                                </Button>
-                                <Button
-                                    className="w-full sm:w-auto"
-                                    disabled={otp.length !== 4 || isVerifying}
-                                    onClick={handleVerifyAndSubmit}
-                                >
-                                    {isVerifying ? t.booking.confirming_btn : t.booking.confirm_btn}
-                                </Button>
-                            </>
-                        )}
-                        {step === 5 && (
-                            <Button variant="outline" className="w-full" onClick={() => {
-                                setIsDialogOpen(false)
-                                setStep(1)
-                                setSuccessBooking(null)
-                            }}>
-                                {t.common.close}
+                        </>
+                    )}
+                    {step === 3 && (
+                        <>
+                            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setStep(2)}>
+                                {t.common.back}
                             </Button>
-                        )}
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
+                            <Button
+                                className="w-full sm:w-auto"
+                                disabled={!clientName || !clientPhone || !clientEmail || isSubmitting}
+                                onClick={handleSendOTP}
+                            >
+                                {isSubmitting ? t.booking.sending_btn : t.booking.send_otp_btn}
+                            </Button>
+                        </>
+                    )}
+                    {step === 4 && (
+                        <>
+                            <Button variant="ghost" className="w-full sm:w-auto" onClick={() => setStep(3)} disabled={isVerifying}>
+                                {t.booking.change_email}
+                            </Button>
+                            <Button
+                                className="w-full sm:w-auto"
+                                disabled={otp.length !== 4 || isVerifying}
+                                onClick={handleVerifyAndSubmit}
+                            >
+                                {isVerifying ? t.booking.confirming_btn : t.booking.confirm_btn}
+                            </Button>
+                        </>
+                    )}
+                    {step === 5 && (
+                        <Button variant="outline" className="w-full" onClick={() => {
+                            setIsDialogOpen(false)
+                            setStep(1)
+                            setSuccessBooking(null)
+                        }}>
+                            {t.common.close}
+                        </Button>
+                    )}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </div >
     )
 }

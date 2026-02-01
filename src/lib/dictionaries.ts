@@ -141,6 +141,24 @@ export const dictionaries = {
                     create_failed: "Failed to create branch",
                     update_failed: "Failed to update branch",
                     delete_failed: "Failed to delete branch",
+                },
+                payments: {
+                    tab_name: "Payment Integration",
+                    enable_label: "Enable Online Payments",
+                    enable_desc: "Allow customers to pay via Paylink",
+                    app_id_label: "App ID",
+                    app_id_placeholder: "Paylink App ID",
+                    secret_label: "Secret Key",
+                    secret_placeholder: "Paylink Secret Key",
+                    prod_label: "Production Mode",
+                    prod_desc: "Switch between Test and Live environment",
+                    deposit_label: "Deposit Percentage (%)",
+                    deposit_desc: "Set to 0 for full payment only, or 1-99 for partial deposit.",
+                    save_btn: "Save Payment Settings",
+                    save_success: "Payment settings saved successfully",
+                    errors: {
+                        required_field: "This field is required",
+                    }
                 }
             },
             employees: {
@@ -590,6 +608,24 @@ export const dictionaries = {
                     create_failed: "فشل إنشاء الفرع",
                     update_failed: "فشل تحديث الفرع",
                     delete_failed: "فشل حذف الفرع",
+                },
+                payments: {
+                    tab_name: "مدفوعات الكترونية",
+                    enable_label: "تفعيل الدفع الإلكتروني",
+                    enable_desc: "السماح للعملاء بالدفع عبر Paylink",
+                    app_id_label: "معرف التطبيق (App ID)",
+                    app_id_placeholder: "أدخل معرف التطبيق",
+                    secret_label: "المفتاح السري (Secret Key)",
+                    secret_placeholder: "أدخل المفتاح السري",
+                    prod_label: "وضع الإنتاج (Production)",
+                    prod_desc: "التبديل بين بيئة التجربة والبيئة الحية",
+                    deposit_label: "نسبة العربون (%)",
+                    deposit_desc: "ضعه 0 للدفع الكامل، أو 1-99 لدفع جزء فقط.",
+                    save_btn: "حفظ إعدادات الدفع",
+                    save_success: "تم حفظ إعدادات الدفع بنجاح",
+                    errors: {
+                        required_field: "هذا الحقل مطلوب",
+                    }
                 }
             },
             employees: {

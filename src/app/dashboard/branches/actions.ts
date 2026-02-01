@@ -342,3 +342,61 @@ export async function deleteBranch(id: number) {
     revalidatePath('/dashboard/branches')
     return { success: true }
 }
+
+// --- Payment Settings ---
+
+export async function getPaymentSettings(branchId: number) {
+    const supabase = await createClient()
+    const { data: settings } = await supabase
+        .from('payment_settings')
+        .select('*')
+        .eq('branch_id', branchId)
+        .single()
+
+    return settings
+}
+
+export async function updatePaymentSettings(branchId: number, data: {
+    app_id: string
+    secret_key: string
+    is_production: boolean
+    is_enabled: boolean
+    deposit_percentage: number
+}) {
+    const supabase = await createClient()
+
+    // Validation
+    if (data.deposit_percentage < 0 || data.deposit_percentage > 100) {
+        return { error: 'Deposit percentage must be between 0 and 100' }
+    }
+
+    // Check if exists
+    const { data: existing } = await supabase
+        .from('payment_settings')
+        .select('id')
+        .eq('branch_id', branchId)
+        .single()
+
+    let error;
+
+    if (existing) {
+        const res = await supabase
+            .from('payment_settings')
+            .update(data)
+            .eq('branch_id', branchId)
+        error = res.error
+    } else {
+        const res = await supabase
+            .from('payment_settings')
+            .insert({
+                branch_id: branchId,
+                ...data
+            })
+        error = res.error
+    }
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/branches')
+    return { success: true }
+}

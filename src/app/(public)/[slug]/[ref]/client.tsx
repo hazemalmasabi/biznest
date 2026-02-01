@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button'
 import { format } from "date-fns"
 import { arSA, enUS } from "date-fns/locale"
 import { publicDictionary } from '@/app/(public)/dictionaries'
+import { initiatePayment } from '../../actions'
+import { Loader2 } from 'lucide-react'
 
 interface BookingDetailsClientProps {
     booking: any
+    paymentSettings: any // Passing full settings
 }
 
-export function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
+export function BookingDetailsClient({ booking, paymentSettings }: BookingDetailsClientProps) {
     const [lang, setLang] = useState<'ar' | 'en'>('ar')
     const t = publicDictionary[lang]
     const dir = lang === 'ar' ? 'rtl' : 'ltr'
@@ -22,6 +25,12 @@ export function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
     const branch = booking.branch  // Fixed alias
     const isPaid = booking.payment_status === 'paid'
     const status = booking.status || 'confirmed'
+    const [isPaying, setIsPaying] = useState(false)
+
+    const paidAmount = Number(booking.paid_amount || 0)
+    const price = Number(booking.price || 0)
+    const remainingAmount = price - paidAmount
+    const isFullyPaid = remainingAmount <= 0
 
     const formatPrice = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -161,18 +170,110 @@ export function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
                             </div>
 
                             {/* Price & Payment Row */}
-                            <div className="flex justify-between items-center p-6 bg-gray-50">
-                                <div className="flex flex-col">
-                                    <span className="text-gray-500 font-bold mb-1">{t.receipt.total_amount}</span>
-                                    {isPaid ? (
-                                        <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded w-fit">{t.receipt.paid}</span>
-                                    ) : (
-                                        <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded w-fit">{t.receipt.unpaid_branch}</span>
+                            <div className="flex flex-col p-6 bg-gray-50 gap-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-500 font-bold">{t.receipt.total_amount}</span>
+                                    <span className="text-2xl font-bold text-gray-900">{formatPrice(price)}</span>
+                                </div>
+
+                                {/* Paid & Remaining Details */}
+                                <div className="flex justify-between text-sm border-t border-gray-200 pt-2">
+                                    <span className="text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded">{t.receipt.paid}: {formatPrice(paidAmount)}</span>
+                                    {remainingAmount > 0 && (
+                                        <span className="text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded">{t.receipt.remaining} {formatPrice(remainingAmount)}</span>
                                     )}
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-2xl font-bold text-gray-900">{formatPrice(booking.price)}</span>
-                                </div>
+
+                                {/* Payment Button */}
+                                {paymentSettings?.is_enabled && status !== 'cancelled' && !isFullyPaid && (
+                                    <div className="space-y-3 mt-4">
+                                        {(() => {
+                                            const depositPercentage = Number(paymentSettings.deposit_percentage || 0)
+                                            const depositAmount = price * (depositPercentage / 100)
+
+                                            // Case 1: Deposit Required AND Not Fully Paid check if deposit is covered
+                                            const isDepositPaid = paidAmount >= (depositAmount - 1) // Tolerance for float diffs
+
+                                            // 1. Pay Deposit / Full Amount (If deposit exists, is NOT paid yet)
+                                            if (depositPercentage > 0 && !isDepositPaid) {
+                                                return (
+                                                    <div className="flex flex-col gap-3">
+                                                        {/* Option A: Pay Deposit */}
+                                                        <Button
+                                                            variant="outline"
+                                                            className="w-full border-primary text-primary hover:bg-primary/5"
+                                                            onClick={async () => {
+                                                                setIsPaying(true)
+                                                                try {
+                                                                    const res = await initiatePayment(booking.id, depositAmount, booking.branch_id, 'deposit')
+                                                                    if (res.error) alert(res.error)
+                                                                    else if (res.url) window.location.href = res.url
+                                                                } catch (e) {
+                                                                    console.error(e)
+                                                                    alert('Payment initiation failed')
+                                                                } finally {
+                                                                    setIsPaying(false)
+                                                                }
+                                                            }}
+                                                            disabled={isPaying}
+                                                        >
+                                                            {isPaying && <Loader2 className="mr-2 h-4 w-4 animate-spin rtl:ml-2 rtl:mr-0" />}
+                                                            {t.common.pay_deposit} ({formatPrice(depositAmount)})
+                                                        </Button>
+
+                                                        {/* Option B: Pay Full Amount */}
+                                                        <Button
+                                                            className="w-full"
+                                                            onClick={async () => {
+                                                                setIsPaying(true)
+                                                                try {
+                                                                    const res = await initiatePayment(booking.id, price, booking.branch_id, 'full')
+                                                                    if (res.error) alert(res.error)
+                                                                    else if (res.url) window.location.href = res.url
+                                                                } catch (e) {
+                                                                    console.error(e)
+                                                                    alert('Payment initiation failed')
+                                                                } finally {
+                                                                    setIsPaying(false)
+                                                                }
+                                                            }}
+                                                            disabled={isPaying}
+                                                        >
+                                                            {isPaying && <Loader2 className="mr-2 h-4 w-4 animate-spin rtl:ml-2 rtl:mr-0" />}
+                                                            {t.common.pay_full} ({formatPrice(price)})
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            }
+
+                                            // 2. Pay Remaining (If deposit is paid OR no deposit required, and there is remaining balance)
+                                            if (remainingAmount > 0) {
+                                                return (
+                                                    <Button
+                                                        className="w-full"
+                                                        onClick={async () => {
+                                                            setIsPaying(true)
+                                                            try {
+                                                                const res = await initiatePayment(booking.id, remainingAmount, booking.branch_id, 'remaining')
+                                                                if (res.error) alert(res.error)
+                                                                else if (res.url) window.location.href = res.url
+                                                            } catch (e) {
+                                                                console.error(e)
+                                                                alert('Payment initiation failed')
+                                                            } finally {
+                                                                setIsPaying(false)
+                                                            }
+                                                        }}
+                                                        disabled={isPaying}
+                                                    >
+                                                        {isPaying && <Loader2 className="mr-2 h-4 w-4 animate-spin rtl:ml-2 rtl:mr-0" />}
+                                                        {t.receipt.pay_remaining} ({formatPrice(remainingAmount)})
+                                                    </Button>
+                                                )
+                                            }
+                                        })()}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </CardContent>

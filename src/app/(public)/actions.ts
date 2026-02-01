@@ -343,8 +343,78 @@ export async function createPublicBooking(data: {
 }
 
 async function getBusinessIdForBranch(supabase: any, branchId: number) {
-    const { data } = await supabase.from('branches').select('business_id').eq('id', branchId).single()
     return data?.business_id
+}
+
+// --- Payment Actions ---
+
+import { PaylinkService } from '@/lib/paylink'
+
+export async function initiatePayment(bookingId: number, amount: number, branchId: number, type: 'full' | 'deposit' | 'remaining') {
+    const supabase = await createAdminClient()
+
+    // 1. Fetch Payment Settings
+    const { data: settings } = await supabase
+        .from('payment_settings')
+        .select('*')
+        .eq('branch_id', branchId)
+        .single()
+
+    if (!settings || !settings.is_enabled) {
+        return { error: 'Payments are not enabled for this branch.' }
+    }
+
+    // 2. Fetch Booking & Customer (for invoice details)
+    const { data: booking } = await supabase
+        .from('bookings')
+        .select(`
+            *,
+            customer:customers (name, phone, email)
+        `)
+        .eq('id', bookingId)
+        .single()
+
+    if (!booking) {
+        return { error: 'Booking not found.' }
+    }
+
+    const paylink = new PaylinkService(settings.app_id, settings.secret_key, settings.is_production)
+
+    // 3. Construct Callback URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
+    const callbackUrl = `${baseUrl}/payment?branchId=${branchId}&bookingId=${bookingId}`
+
+    try {
+        const titleMap = {
+            'full': 'Full Payment',
+            'deposit': 'Deposit Payment',
+            'remaining': 'Remaining Balance Payment'
+        }
+
+        const invoice = await paylink.createInvoice({
+            amount: amount,
+            callBackUrl: callbackUrl,
+            clientEmail: booking.customer.email,
+            clientMobile: booking.customer.phone,
+            clientName: booking.customer.name,
+            note: `Payment for Booking #${bookingId} (${type})`,
+            orderNumber: bookingId.toString(),
+            products: [{
+                title: `Booking #${bookingId} - ${titleMap[type]}`,
+                price: amount,
+                qty: 1
+            }]
+        })
+
+        if (invoice.url) {
+            return { success: true, url: invoice.url }
+        } else {
+            return { error: 'Failed to generate payment link.' }
+        }
+    } catch (e: any) {
+        console.error("Initiate Payment Error", e)
+        return { error: e.message || 'Payment initiation failed.' }
+    }
 }
 
 

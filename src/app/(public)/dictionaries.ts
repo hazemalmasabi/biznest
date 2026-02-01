@@ -12,6 +12,10 @@ export const publicDictionary = {
             back: 'رجوع',
             loading: 'جاري التحميل...',
             currency: '',
+            payment_options: 'خيارات الدفع',
+            pay_full: 'دفع كامل المبلغ',
+            pay_deposit: 'دفع العربون',
+            pay_later: 'الدفع لاحقاً (في الفرع)',
         },
         services: {
             multiple_options: 'خيارات متعددة',
@@ -76,6 +80,8 @@ export const publicDictionary = {
             total_amount: 'المبلغ الإجمالي:',
             paid: 'مدفوع',
             unpaid_branch: 'غير مدفوع (في الفرع)',
+            remaining: 'المتبقي:',
+            pay_remaining: 'دفع المبلغ المتبقي',
         }
     },
     en: {
@@ -91,6 +97,10 @@ export const publicDictionary = {
             back: 'Back',
             loading: 'Loading...',
             currency: 'SAR',
+            payment_options: 'Payment Options',
+            pay_full: 'Pay Full Amount',
+            pay_deposit: 'Pay Deposit',
+            pay_later: 'Pay Later (At Branch)',
         },
         services: {
             multiple_options: 'Multiple Options',
@@ -155,6 +165,8 @@ export const publicDictionary = {
             total_amount: 'Total Amount:',
             paid: 'Paid',
             unpaid_branch: 'Unpaid (At Branch)',
+            remaining: 'Remaining:',
+            pay_remaining: 'Pay Remaining',
         }
     }
 }

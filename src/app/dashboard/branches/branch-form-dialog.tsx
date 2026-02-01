@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { createBranch, updateBranch, Branch, getBranchWorkingHours, updateBranchWorkingHours, WorkingHour } from './actions'
+import { createBranch, updateBranch, Branch, getBranchWorkingHours, updateBranchWorkingHours, WorkingHour, getPaymentSettings, updatePaymentSettings } from './actions'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 
 type BranchFormDialogProps = {
@@ -38,6 +38,16 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
         location_url: '',
         is_main: false
     })
+
+    const [paymentSettings, setPaymentSettings] = useState({
+        app_id: '',
+        secret_key: '',
+        is_production: false,
+        is_enabled: false,
+        deposit_percentage: 30
+    })
+    const [isSavingPayments, setIsSavingPayments] = useState(false)
+    const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
 
     useEffect(() => {
         if (open) {
@@ -71,6 +81,28 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                         })
                     }
                     setWorkingHours(fullWeek)
+                })
+
+                // Fetch Payment Settings
+                getPaymentSettings(branchToEdit.id).then(settings => {
+                    if (settings) {
+                        setPaymentSettings({
+                            app_id: settings.app_id || '',
+                            secret_key: settings.secret_key || '',
+                            is_production: settings.is_production,
+                            is_enabled: settings.is_enabled,
+                            deposit_percentage: settings.deposit_percentage ?? 30
+                        })
+                    } else {
+                        // Reset defaults if no settings found
+                        setPaymentSettings({
+                            app_id: '',
+                            secret_key: '',
+                            is_production: false,
+                            is_enabled: false,
+                            deposit_percentage: 30
+                        })
+                    }
                 })
             } else {
                 setFormData({
@@ -259,6 +291,14 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                                 >
                                     {dict.dashboard.branches.working_hours || (lang === 'ar' ? 'ساعات العمل' : 'Working Hours')}
                                 </TabsTrigger>
+                                {branchToEdit && (
+                                    <TabsTrigger
+                                        value="payments"
+                                        className="py-2.5 rounded-md data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-transparent data-[state=active]:border-slate-800 transition-all font-medium"
+                                    >
+                                        {dict.dashboard.branches.payments.tab_name}
+                                    </TabsTrigger>
+                                )}
                             </TabsList>
 
                             <TabsContent value="info" className="space-y-4 pt-4">
@@ -426,6 +466,117 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="payments" className="pt-4 space-y-4">
+                                <div className="space-y-4">
+                                    <div className="flex items-center space-x-2 rtl:space-x-reverse justify-between bg-slate-50 p-3 rounded-lg border">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-base">{dict.dashboard.branches.payments.enable_label}</Label>
+                                            <p className="text-xs text-muted-foreground">{dict.dashboard.branches.payments.enable_desc}</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={paymentSettings.is_enabled}
+                                            onCheckedChange={(c) => setPaymentSettings({ ...paymentSettings, is_enabled: !!c })}
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label>{dict.dashboard.branches.payments.app_id_label} <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            value={paymentSettings.app_id}
+                                            onChange={(e) => {
+                                                setPaymentSettings({ ...paymentSettings, app_id: e.target.value })
+                                                if (paymentErrors.app_id) setPaymentErrors({ ...paymentErrors, app_id: '' })
+                                            }}
+                                            placeholder={dict.dashboard.branches.payments.app_id_placeholder}
+                                            type="password"
+                                            className={paymentErrors.app_id ? "border-red-500" : ""}
+                                        />
+                                        {paymentErrors.app_id && <p className="text-sm text-red-500">{paymentErrors.app_id}</p>}
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label>{dict.dashboard.branches.payments.secret_label} <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            value={paymentSettings.secret_key}
+                                            onChange={(e) => {
+                                                setPaymentSettings({ ...paymentSettings, secret_key: e.target.value })
+                                                if (paymentErrors.secret_key) setPaymentErrors({ ...paymentErrors, secret_key: '' })
+                                            }}
+                                            placeholder={dict.dashboard.branches.payments.secret_placeholder}
+                                            type="password"
+                                            className={paymentErrors.secret_key ? "border-red-500" : ""}
+                                        />
+                                        {paymentErrors.secret_key && <p className="text-sm text-red-500">{paymentErrors.secret_key}</p>}
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 rtl:space-x-reverse justify-between bg-slate-50 p-3 rounded-lg border">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-base">{dict.dashboard.branches.payments.prod_label}</Label>
+                                            <p className="text-xs text-muted-foreground">{dict.dashboard.branches.payments.prod_desc}</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={paymentSettings.is_production}
+                                            onCheckedChange={(c) => setPaymentSettings({ ...paymentSettings, is_production: !!c })}
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label>{dict.dashboard.branches.payments.deposit_label}</Label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={paymentSettings.deposit_percentage}
+                                            onChange={(e) => setPaymentSettings({ ...paymentSettings, deposit_percentage: parseInt(e.target.value) || 0 })}
+                                        />
+                                        <p className="text-xs text-muted-foreground">{dict.dashboard.branches.payments.deposit_desc}</p>
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        onClick={async () => {
+                                            if (!branchToEdit) return
+
+                                            // Validation
+                                            const newErrors: Record<string, string> = {}
+                                            if (paymentSettings.is_enabled) {
+                                                if (!paymentSettings.app_id) newErrors.app_id = dict.dashboard.branches.payments.errors.required_field
+                                                if (!paymentSettings.secret_key) newErrors.secret_key = dict.dashboard.branches.payments.errors.required_field
+                                            }
+
+                                            if (Object.keys(newErrors).length > 0) {
+                                                setPaymentErrors(newErrors)
+                                                return
+                                            } else {
+                                                setPaymentErrors({})
+                                            }
+
+                                            setIsSavingPayments(true)
+                                            try {
+                                                const res = await updatePaymentSettings(branchToEdit.id, paymentSettings)
+                                                if (res.error) {
+                                                    setGlobalError(res.error)
+                                                } else {
+                                                    // Success feedback
+                                                    alert(dict.dashboard.branches.payments.save_success)
+                                                }
+                                            } catch (e) {
+                                                console.error(e)
+                                                setGlobalError('Failed to save settings')
+                                            } finally {
+                                                setIsSavingPayments(false)
+                                            }
+                                        }}
+                                        disabled={isSavingPayments}
+                                        className="w-full"
+                                    >
+                                        {isSavingPayments && <Loader2 className="mr-2 h-4 w-4 animate-spin rtl:ml-2 rtl:mr-0" />}
+                                        {dict.dashboard.branches.payments.save_btn}
+                                    </Button>
+
                                 </div>
                             </TabsContent>
                         </Tabs>

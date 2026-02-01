@@ -75,11 +75,18 @@ async function getPublicBranchData(slug: string) {
         .select('*')
         .eq('branch_id', branch.id)
 
+    const { data: paymentSettings } = await supabase
+        .from('payment_settings')
+        .select('*')
+        .eq('branch_id', branch.id)
+        .single()
+
     return {
         branch,
         services: services as Service[],
         durations: (durations || []) as ServiceDuration[],
-        workingHours: (workingHours || []) as any[]
+        workingHours: (workingHours || []) as any[],
+        paymentSettings
     }
 }
 
@@ -105,6 +112,7 @@ export default async function BranchPublicPage({ params }: { params: Promise<{ s
             services={data.services}
             durations={data.durations}
             workingHours={(data.workingHours || []) as any[]}
+            paymentSettings={data.paymentSettings}
         />
     )
 }
