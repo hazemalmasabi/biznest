@@ -212,3 +212,68 @@ export async function getDashboardStats(dateFrom: string, dateTo: string, branch
         vouchers: vouchersStats
     }
 }
+
+export async function getFutureEvents(branchId?: string, sortOrder: 'asc' | 'desc' = 'asc') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { all: [], online: [] }
+
+    const businessId = await getBusinessId(supabase, user.id)
+    if (!businessId) return { all: [], online: [] }
+
+    console.log(`getFutureEvents: fetching for business ${businessId}, branch ${branchId || 'all'}, sort ${sortOrder}`)
+
+    const todayStart = new Date().toISOString().split('T')[0] + 'T00:00:00'
+
+    // Query 1: All Future Bookings
+    let allQuery = supabase
+        .from('bookings')
+        .select(`
+            id, 
+            start_time, 
+            status, 
+            service:services(name), 
+            customer:customers(name),
+            branch:branches(name)
+        `)
+        .eq('business_id', businessId)
+        .eq('is_deleted', false)
+        .gte('start_time', todayStart)
+        .order('start_time', { ascending: sortOrder === 'asc' })
+        .limit(25)
+
+    if (branchId && branchId !== 'all') {
+        allQuery = allQuery.eq('branch_id', branchId)
+    }
+
+    // Query 2: Online Future Bookings (created_by is null)
+    let onlineQuery = supabase
+        .from('bookings')
+        .select(`
+            id, 
+            start_time, 
+            status, 
+            service:services(name), 
+            customer:customers(name),
+            branch:branches(name)
+        `)
+        .eq('business_id', businessId)
+        .eq('is_deleted', false)
+        .is('created_by', null)
+        .gte('start_time', todayStart)
+        .order('start_time', { ascending: sortOrder === 'asc' })
+        .limit(10)
+
+    if (branchId && branchId !== 'all') {
+        onlineQuery = onlineQuery.eq('branch_id', branchId)
+    }
+
+    const [allResult, onlineResult] = await Promise.all([allQuery, onlineQuery])
+
+    console.log(`getFutureEvents: found ${allResult.data?.length} all, ${onlineResult.data?.length} online`)
+
+    return {
+        all: allResult.data || [],
+        online: onlineResult.data || []
+    }
+}

@@ -42,6 +42,14 @@ async function getPublicBranchData(slug: string) {
             business_id,
             image_url,
             location_url,
+            description,
+            social_x,
+            social_youtube,
+            social_instagram,
+            social_facebook,
+            social_snapchat,
+            social_telegram,
+            social_whatsapp,
             businesses (
                 name
             )

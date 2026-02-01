@@ -14,6 +14,14 @@ export type Branch = {
     slug: string | null
     image_url?: string | null
     location_url?: string | null
+    description?: string | null
+    social_x?: string | null
+    social_youtube?: string | null
+    social_instagram?: string | null
+    social_facebook?: string | null
+    social_snapchat?: string | null
+    social_telegram?: string | null
+    social_whatsapp?: string | null
 }
 
 export async function getBranches() {
@@ -147,6 +155,14 @@ export async function createBranch(formData: FormData) {
     const slug = formData.get('slug') as string
     const locationUrl = formData.get('location_url') as string
     const imageFile = formData.get('image') as File
+    const description = formData.get('description') as string
+    const socialX = formData.get('social_x') as string
+    const socialYoutube = formData.get('social_youtube') as string
+    const socialInstagram = formData.get('social_instagram') as string
+    const socialFacebook = formData.get('social_facebook') as string
+    const socialSnapchat = formData.get('social_snapchat') as string
+    const socialTelegram = formData.get('social_telegram') as string
+    const socialWhatsapp = formData.get('social_whatsapp') as string
 
     // Server-side validation
     if (!name) return { error: 'Name is required' }
@@ -184,7 +200,15 @@ export async function createBranch(formData: FormData) {
             is_main: isMain,
             slug: slug || null,
             location_url: locationUrl || null,
-            image_url: imageUrl
+            image_url: imageUrl,
+            description: description || null,
+            social_x: socialX || null,
+            social_youtube: socialYoutube || null,
+            social_instagram: socialInstagram || null,
+            social_facebook: socialFacebook || null,
+            social_snapchat: socialSnapchat || null,
+            social_telegram: socialTelegram || null,
+            social_whatsapp: socialWhatsapp || null
         })
         .select()
         .single()
@@ -214,6 +238,14 @@ export async function updateBranch(id: number, formData: FormData) {
     const slug = formData.get('slug') as string
     const locationUrl = formData.get('location_url') as string
     const imageFile = formData.get('image') as File
+    const description = formData.get('description') as string
+    const socialX = formData.get('social_x') as string
+    const socialYoutube = formData.get('social_youtube') as string
+    const socialInstagram = formData.get('social_instagram') as string
+    const socialFacebook = formData.get('social_facebook') as string
+    const socialSnapchat = formData.get('social_snapchat') as string
+    const socialTelegram = formData.get('social_telegram') as string
+    const socialWhatsapp = formData.get('social_whatsapp') as string
 
     if (!name) return { error: 'Name is required' }
     if (!address) return { error: 'Address is required' }
@@ -251,7 +283,15 @@ export async function updateBranch(id: number, formData: FormData) {
         is_main: isMain,
         slug: slug || null,
         location_url: locationUrl || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        description: description || null,
+        social_x: socialX || null,
+        social_youtube: socialYoutube || null,
+        social_instagram: socialInstagram || null,
+        social_facebook: socialFacebook || null,
+        social_snapchat: socialSnapchat || null,
+        social_telegram: socialTelegram || null,
+        social_whatsapp: socialWhatsapp || null
     }
 
     if (imageUrl) {

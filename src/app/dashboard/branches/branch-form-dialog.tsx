@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -36,7 +37,15 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
         address: '',
         phone: '',
         location_url: '',
-        is_main: false
+        is_main: false,
+        description: '',
+        social_x: '',
+        social_youtube: '',
+        social_instagram: '',
+        social_facebook: '',
+        social_snapchat: '',
+        social_telegram: '',
+        social_whatsapp: ''
     })
 
     const [paymentSettings, setPaymentSettings] = useState({
@@ -61,7 +70,15 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                     address: branchToEdit.address || '',
                     phone: branchToEdit.phone || '',
                     location_url: (branchToEdit as any).location_url || '',
-                    is_main: branchToEdit.is_main || false
+                    is_main: branchToEdit.is_main || false,
+                    description: (branchToEdit as any).description || '',
+                    social_x: (branchToEdit as any).social_x || '',
+                    social_youtube: (branchToEdit as any).social_youtube || '',
+                    social_instagram: (branchToEdit as any).social_instagram || '',
+                    social_facebook: (branchToEdit as any).social_facebook || '',
+                    social_snapchat: (branchToEdit as any).social_snapchat || '',
+                    social_telegram: (branchToEdit as any).social_telegram || '',
+                    social_whatsapp: (branchToEdit as any).social_whatsapp || ''
                 })
                 setImagePreview((branchToEdit as any).image_url || null)
                 setImageFile(null)
@@ -111,7 +128,15 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                     address: '',
                     phone: '',
                     location_url: '',
-                    is_main: false
+                    is_main: false,
+                    description: '',
+                    social_x: '',
+                    social_youtube: '',
+                    social_instagram: '',
+                    social_facebook: '',
+                    social_snapchat: '',
+                    social_telegram: '',
+                    social_whatsapp: ''
                 })
                 setImagePreview(null)
                 setImageFile(null)
@@ -145,6 +170,14 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
         submitData.append('phone', formData.phone)
         submitData.append('location_url', formData.location_url)
         if (formData.is_main) submitData.append('is_main', 'on')
+        submitData.append('description', formData.description)
+        submitData.append('social_x', formData.social_x)
+        submitData.append('social_youtube', formData.social_youtube)
+        submitData.append('social_instagram', formData.social_instagram)
+        submitData.append('social_facebook', formData.social_facebook)
+        submitData.append('social_snapchat', formData.social_snapchat)
+        submitData.append('social_telegram', formData.social_telegram)
+        submitData.append('social_whatsapp', formData.social_whatsapp)
 
         if (imageFile) {
             submitData.append('image', imageFile)
@@ -296,7 +329,7 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                                         value="payments"
                                         className="py-2.5 rounded-md data-[state=active]:bg-slate-900 data-[state=active]:text-white border border-transparent data-[state=active]:border-slate-800 transition-all font-medium"
                                     >
-                                        {dict.dashboard.branches.payments.tab_name}
+                                        {dict.dashboard.branches.payments.tab_name} <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full mx-1 font-normal opacity-80">{lang === 'ar' ? 'قريباً' : 'Soon'}</span>
                                     </TabsTrigger>
                                 )}
                             </TabsList>
@@ -432,6 +465,125 @@ export function BranchFormDialog({ open, onOpenChange, branchToEdit, dict, lang,
                                         </Label>
                                     </div>
                                 )}
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="description" className={lang === 'ar' ? "text-right" : "text-left"}>
+                                        {lang === 'ar' ? 'الوصف' : 'Description'} <span className="text-xs text-muted-foreground font-normal">({dict.dashboard?.common?.optional || (lang === 'ar' ? 'اختياري' : 'Optional')})</span>
+                                    </Label>
+                                    <Textarea
+                                        id="description"
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder={lang === 'ar' ? "وصف مختصر للفرع..." : "Brief description of the branch..."}
+                                        className="h-20"
+                                    />
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t">
+                                    <h3 className={`font-medium ${lang === 'ar' ? "text-right" : "text-left"}`}>{lang === 'ar' ? "وسائل التواصل الاجتماعي (اختياري)" : "Social Media (Optional)"}</h3>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="social_twitter" className={lang === 'ar' ? "text-right" : "text-left"}>X (Twitter)</Label>
+                                            <Input
+                                                id="social_x"
+                                                value={formData.social_x}
+                                                onChange={(e) => setFormData({ ...formData, social_x: e.target.value })}
+                                                placeholder="https://x.com/username"
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-[10px] text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "الرابط الكامل (https://x.com/...)" : "Full Link (https://x.com/...)"}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="social_instagram" className={lang === 'ar' ? "text-right" : "text-left"}>Instagram</Label>
+                                            <Input
+                                                id="social_instagram"
+                                                value={formData.social_instagram}
+                                                onChange={(e) => setFormData({ ...formData, social_instagram: e.target.value })}
+                                                placeholder="https://instagram.com/username"
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-[10px] text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "الرابط الكامل" : "Full Link"}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="social_facebook" className={lang === 'ar' ? "text-right" : "text-left"}>Facebook</Label>
+                                            <Input
+                                                id="social_facebook"
+                                                value={formData.social_facebook}
+                                                onChange={(e) => setFormData({ ...formData, social_facebook: e.target.value })}
+                                                placeholder="https://facebook.com/..."
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-[10px] text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "الرابط الكامل" : "Full Link"}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="social_youtube" className={lang === 'ar' ? "text-right" : "text-left"}>YouTube</Label>
+                                            <Input
+                                                id="social_youtube"
+                                                value={formData.social_youtube}
+                                                onChange={(e) => setFormData({ ...formData, social_youtube: e.target.value })}
+                                                placeholder="https://youtube.com/..."
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-[10px] text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "الرابط الكامل" : "Full Link"}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="social_snapchat" className={lang === 'ar' ? "text-right" : "text-left"}>Snapchat</Label>
+                                            <Input
+                                                id="social_snapchat"
+                                                value={formData.social_snapchat}
+                                                onChange={(e) => setFormData({ ...formData, social_snapchat: e.target.value })}
+                                                placeholder="https://snapchat.com/add/..."
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-[10px] text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "الرابط الكامل (https://snapchat.com/add/...)" : "Full Link"}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="social_telegram" className={lang === 'ar' ? "text-right" : "text-left"}>Telegram</Label>
+                                            <Input
+                                                id="social_telegram"
+                                                value={formData.social_telegram}
+                                                onChange={(e) => setFormData({ ...formData, social_telegram: e.target.value })}
+                                                placeholder="https://t.me/username"
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-[10px] text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "الرابط الكامل" : "Full Link"}
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2 col-span-2">
+                                            <Label htmlFor="social_whatsapp" className={lang === 'ar' ? "text-right" : "text-left"}>WhatsApp</Label>
+                                            <Input
+                                                id="social_whatsapp"
+                                                value={formData.social_whatsapp}
+                                                onChange={(e) => setFormData({ ...formData, social_whatsapp: e.target.value })}
+                                                placeholder="9665..."
+                                                className="text-left"
+                                                dir="ltr"
+                                            />
+                                            <p className={`text-xs text-muted-foreground ${lang === 'ar' ? "text-right" : "text-left"}`}>
+                                                {lang === 'ar' ? "رقم الجوال مع مفتاح الدولة (مثال: 9665...)" : "Phone number with country code (e.g. 9665...)"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </TabsContent>
 
                             <TabsContent value="hours" className="pt-4">

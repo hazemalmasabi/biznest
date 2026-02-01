@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Calendar } from 'lucide-react'
 import { getDashboardStats, DashboardStats } from './actions'
+import { LatestEvents } from './latest-events'
 
 interface DashboardClientProps {
     initialStats: DashboardStats
@@ -239,6 +240,9 @@ export function DashboardClient({ initialStats, branches, userProfile, dict, lan
                     </Card>
                 </div>
             </div>
+
+            {/* Latest Events Section */}
+            <LatestEvents branchId={selectedBranch} lang={lang as 'ar' | 'en'} dict={dict} />
 
             {isLoading && (
                 <div className="fixed inset-0 bg-white/50 z-50 flex items-center justify-center">

@@ -130,6 +130,14 @@ export async function getPublicBooking(token: string) {
                 phone,
                 image_url,
                 location_url,
+                description,
+                social_x,
+                social_instagram,
+                social_facebook,
+                social_youtube,
+                social_snapchat,
+                social_telegram,
+                social_whatsapp,
                 businesses (name)
             ),
             customer:customers (name, phone, email)
@@ -343,12 +351,17 @@ export async function createPublicBooking(data: {
 }
 
 async function getBusinessIdForBranch(supabase: any, branchId: number) {
+    const { data } = await supabase
+        .from('branches')
+        .select('business_id')
+        .eq('id', branchId)
+        .single()
     return data?.business_id
 }
 
 // --- Payment Actions ---
 
-import { PaylinkService } from '@/lib/paylink'
+import { GeideaService } from "@/lib/geidea"
 
 export async function initiatePayment(bookingId: number, amount: number, branchId: number, type: 'full' | 'deposit' | 'remaining') {
     const supabase = await createAdminClient()
@@ -378,43 +391,48 @@ export async function initiatePayment(bookingId: number, amount: number, branchI
         return { error: 'Booking not found.' }
     }
 
-    const paylink = new PaylinkService(settings.app_id, settings.secret_key, settings.is_production)
-
-    // 3. Construct Callback URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
-    const callbackUrl = `${baseUrl}/payment?branchId=${branchId}&bookingId=${bookingId}`
-
+    // 4. Initiate Geidea Payment
     try {
-        const titleMap = {
-            'full': 'Full Payment',
-            'deposit': 'Deposit Payment',
-            'remaining': 'Remaining Balance Payment'
-        }
-
-        const invoice = await paylink.createInvoice({
-            amount: amount,
-            callBackUrl: callbackUrl,
-            clientEmail: booking.customer.email,
-            clientMobile: booking.customer.phone,
-            clientName: booking.customer.name,
-            note: `Payment for Booking #${bookingId} (${type})`,
-            orderNumber: bookingId.toString(),
-            products: [{
-                title: `Booking #${bookingId} - ${titleMap[type]}`,
-                price: amount,
-                qty: 1
-            }]
+        const geidea = new GeideaService({
+            app_id: settings.app_id!,
+            secret_key: settings.secret_key!,
+            is_production: settings.is_production
         })
 
-        if (invoice.url) {
-            return { success: true, url: invoice.url }
-        } else {
-            return { error: 'Failed to generate payment link.' }
+        const validBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        const callbackUrl = `${validBaseUrl}/payment?branchId=${branchId}&bookingId=${bookingId}`
+
+        // Geidea typically requires a return URL for the user to be redirected to after payment
+        // We can use the payment callback route for this as well, or the tracking page directly if we trust the callback handling.
+        // Best practice: redirect to the callback handler so it verifies and then redirects to tracking.
+        const returnUrl = `${validBaseUrl}/payment?branchId=${branchId}&bookingId=${bookingId}`
+
+        const session = await geidea.createSession({
+            amount: amount,
+            currency: 'SAR',
+            orderId: bookingId.toString(), // Use bookingId as orderId
+            callbackUrl: callbackUrl,
+            returnUrl: returnUrl,
+            customerEmail: booking.customer.email,
+            customerName: booking.customer.name,
+            customerPhone: booking.customer.phone
+        })
+
+        // Construct Checkout URL (KSA Environment)
+        // If the session object contains a checkout URL, use it. Otherwise construct it.
+        // Geidea response usually includes `session.id`.
+        // KSA HPP: https://www.ksamerchant.geidea.net/hpp/checkout/?sessionId={sessionId}
+        const checkoutUrl = `https://www.ksamerchant.geidea.net/hpp/checkout/?sessionId=${session.id}`
+
+        return { success: true, url: checkoutUrl }
+
+    } catch (error: any) {
+        console.error('Initiate Payment Error', error)
+
+        // Return user-friendly error for network/timeout
+        if (error.message && (error.message.includes('fetch') || error.message.includes('unavailable'))) {
+            return { error: "Payment service connection failed. Please check your internet or try again later." }
         }
-    } catch (e: any) {
-        console.error("Initiate Payment Error", e)
-        return { error: e.message || 'Payment initiation failed.' }
+        return { error: error.message || 'Payment initiation failed' }
     }
 }
-
-
