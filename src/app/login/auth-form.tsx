@@ -71,18 +71,23 @@ export function AuthForm({ isSignup, dict, message, error }: AuthFormProps) {
         setErrors({})
         setIsLoading(true)
 
+        // Set a timeout to stop loading if redirect doesn't happen (error case)
+        const timeoutId = setTimeout(() => {
+            setIsLoading(false)
+        }, 2000)
+
         try {
             if (isSignup) {
                 await signup(formData)
             } else {
                 await login(formData)
             }
+            // If we reach here and redirect happened, component unmounts
+            // If error happened, redirect with error param will reload page
         } catch (err) {
-            // Error will be handled by the server action
             console.error(err)
-        } finally {
-            // Keep loading state on to prevent multiple submissions
-            // The page will redirect on success anyway
+            clearTimeout(timeoutId)
+            setIsLoading(false)
         }
     }
 
