@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { login, signup } from "./actions"
 
 type AuthFormProps = {
@@ -18,6 +18,7 @@ export function AuthForm({ isSignup, dict, message, error }: AuthFormProps) {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
+    const [isLoading, setIsLoading] = useState(false)
 
     const validateForm = (formData: FormData) => {
         const newErrors: { [key: string]: string } = {}
@@ -57,7 +58,7 @@ export function AuthForm({ isSignup, dict, message, error }: AuthFormProps) {
         return newErrors
     }
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
         const newErrors = validateForm(formData)
@@ -68,10 +69,20 @@ export function AuthForm({ isSignup, dict, message, error }: AuthFormProps) {
         }
 
         setErrors({})
-        if (isSignup) {
-            signup(formData)
-        } else {
-            login(formData)
+        setIsLoading(true)
+
+        try {
+            if (isSignup) {
+                await signup(formData)
+            } else {
+                await login(formData)
+            }
+        } catch (err) {
+            // Error will be handled by the server action
+            console.error(err)
+        } finally {
+            // Keep loading state on to prevent multiple submissions
+            // The page will redirect on success anyway
         }
     }
 
@@ -217,8 +228,15 @@ export function AuthForm({ isSignup, dict, message, error }: AuthFormProps) {
                 </div>
             )}
 
-            <Button className="w-full mt-2" type="submit">
-                {isSignup ? dict.common.signup : dict.common.signin}
+            <Button className="w-full mt-2" type="submit" disabled={isLoading}>
+                {isLoading ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {isSignup ? dict.common.signup : dict.common.signin}
+                    </>
+                ) : (
+                    isSignup ? dict.common.signup : dict.common.signin
+                )}
             </Button>
         </form>
     )

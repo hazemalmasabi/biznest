@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent, CardFooter } from "@/components/ui/card"
 import { updateAuthInfo } from './actions'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 type AuthSettingsFormProps = {
     userEmail: string
@@ -128,7 +128,10 @@ export function AuthSettingsForm({ userEmail, dict }: AuthSettingsFormProps) {
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" type="reset">{dict.dashboard.common.cancel}</Button>
-                <Button type="submit" disabled={isPending}>{isPending ? dict.common.loading : dict.dashboard.common.update}</Button>
+                <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isPending ? dict.common.loading : dict.dashboard.common.update}
+                </Button>
             </CardFooter>
         </form>
     )

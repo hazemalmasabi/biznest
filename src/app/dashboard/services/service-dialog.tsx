@@ -392,7 +392,7 @@ export function ServiceDialog({ open, onOpenChange, service, branches, dict, use
                                             <SelectValue placeholder={dict.dashboard?.services?.select_branch} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-white" dir="rtl">
-                                            {branches.map((branch) => (
+                                            {branches.filter(b => !b.is_deleted).map((branch) => (
                                                 <SelectItem key={branch.id} value={branch.id.toString()}>
                                                     {branch.name}
                                                 </SelectItem>

@@ -131,7 +131,7 @@ export function VoucherDialog({ open, onOpenChange, branches, dict, lang, vouche
                                     <SelectValue placeholder={dict.dashboard.vouchers.select_branch || ""} />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
-                                    {branches.map(b => (
+                                    {branches.filter(b => !b.is_deleted).map(b => (
                                         <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
                                     ))}
                                 </SelectContent>

@@ -238,7 +238,7 @@ export function VoucherList({ initialVouchers, branches, dict, lang, userRole, u
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                         {userRole === 'owner' && <SelectItem value="all">{dict.dashboard.vouchers.filters.all_branches}</SelectItem>}
-                        {branches.map(b => (
+                        {branches.filter(b => !b.is_deleted).map(b => (
                             <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
                         ))}
                     </SelectContent>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent, CardFooter } from "@/components/ui/card"
 import { updateBasicInfo, updateBusiness } from './actions'
+import { Loader2 } from 'lucide-react'
 
 // --- Basic Data Form ---
 type BasicSettingsFormProps = {
@@ -17,6 +18,7 @@ type BasicSettingsFormProps = {
 export function BasicSettingsForm({ fullName, phone, dict }: BasicSettingsFormProps) {
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
     const [isPending, setIsPending] = useState(false)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const handleSubmit = async (formData: FormData) => {
         setErrors({})
@@ -37,18 +39,26 @@ export function BasicSettingsForm({ fullName, phone, dict }: BasicSettingsFormPr
         }
 
         setIsPending(true)
+        setSuccessMessage(null)
         const result = await updateBasicInfo(formData)
         setIsPending(false)
 
         if (result?.error) {
-            // Handle generic server errors, maybe show global toast or error under a specific field if applicable
             console.error(result.error)
+        } else {
+            setSuccessMessage('تم التحديث بنجاح')
+            setTimeout(() => setSuccessMessage(null), 3000)
         }
     }
 
     return (
         <form action={handleSubmit}>
             <CardContent className="space-y-4">
+                {successMessage && (
+                    <div className="p-3 rounded text-sm bg-green-50 text-green-600">
+                        {successMessage}
+                    </div>
+                )}
                 <div className="space-y-2">
                     <Label htmlFor="fullName">{dict.dashboard.common.name}</Label>
                     <Input
@@ -75,7 +85,10 @@ export function BasicSettingsForm({ fullName, phone, dict }: BasicSettingsFormPr
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" type="reset">{dict.dashboard.common.cancel}</Button>
-                <Button type="submit" disabled={isPending}>{isPending ? dict.common.loading : dict.dashboard.common.update}</Button>
+                <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isPending ? dict.common.loading : dict.dashboard.common.update}
+                </Button>
             </CardFooter>
         </form>
     )
@@ -91,6 +104,7 @@ type BusinessSettingsFormProps = {
 export function BusinessSettingsForm({ businessId, businessName, dict }: BusinessSettingsFormProps) {
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
     const [isPending, setIsPending] = useState(false)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const handleSubmit = async (formData: FormData) => {
         setErrors({})
@@ -105,11 +119,15 @@ export function BusinessSettingsForm({ businessId, businessName, dict }: Busines
         }
 
         setIsPending(true)
+        setSuccessMessage(null)
         const result = await updateBusiness(formData)
         setIsPending(false)
 
         if (result?.error) {
             console.error(result.error)
+        } else {
+            setSuccessMessage('تم التحديث بنجاح')
+            setTimeout(() => setSuccessMessage(null), 3000)
         }
     }
 
@@ -117,6 +135,11 @@ export function BusinessSettingsForm({ businessId, businessName, dict }: Busines
         <form action={handleSubmit}>
             <input type="hidden" name="businessId" value={businessId} />
             <CardContent className="space-y-4">
+                {successMessage && (
+                    <div className="p-3 rounded text-sm bg-green-50 text-green-600">
+                        {successMessage}
+                    </div>
+                )}
                 <div className="space-y-2">
                     <Label htmlFor="businessName">{dict.onboarding.business_name_label}</Label>
                     <Input
@@ -130,7 +153,10 @@ export function BusinessSettingsForm({ businessId, businessName, dict }: Busines
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" type="reset">{dict.dashboard.common.cancel}</Button>
-                <Button type="submit" disabled={isPending}>{isPending ? dict.common.loading : dict.dashboard.common.update}</Button>
+                <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isPending ? dict.common.loading : dict.dashboard.common.update}
+                </Button>
             </CardFooter>
         </form>
     )

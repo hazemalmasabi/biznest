@@ -206,7 +206,7 @@ export function ServiceList({ initialServices, branches, dict, lang, userRole, u
                         </SelectTrigger>
                         <SelectContent className="bg-white text-slate-900 border-slate-200">
                             {userRole === 'owner' && <SelectItem value="all">{dict.dashboard?.employees?.all_branches || 'All Branches'}</SelectItem>}
-                            {branches.map((branch) => (
+                            {branches.filter(b => !b.is_deleted).map((branch) => (
                                 <SelectItem key={branch.id} value={branch.id.toString()}>
                                     {branch.name}
                                 </SelectItem>

@@ -26,15 +26,18 @@ export default async function ServicesPage() {
     if (profile?.role === 'owner') {
         const { data: branchesData } = await supabase
             .from('business_members')
-            .select('businesses(branches(id, name))')
+            .select('businesses(branches(id, name, is_deleted))')
             .eq('user_id', user.id)
             .single()
-        allBranches = (branchesData?.businesses as any)?.branches || []
+        // Filter out deleted branches
+        const branches = (branchesData?.businesses as any)?.branches || []
+        allBranches = branches.filter((b: any) => !b.is_deleted)
     } else if (profile?.branch_id) {
         const { data: branch } = await supabase
             .from('branches')
-            .select('id, name')
+            .select('id, name, is_deleted')
             .eq('id', profile.branch_id)
+            .eq('is_deleted', false)
             .single()
         if (branch) allBranches = [branch]
     }
