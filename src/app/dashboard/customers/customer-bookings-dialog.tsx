@@ -128,7 +128,7 @@ export function CustomerBookingsDialog({ open, onOpenChange, customerId, custome
                         <Loader2 className="h-8 w-8 animate-spin" />
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
                         {/* Stats Cards */}
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                             <Card>
@@ -222,7 +222,7 @@ export function CustomerBookingsDialog({ open, onOpenChange, customerId, custome
                                 </CardContent>
                             </Card>
                         </div>
-                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto border rounded-md">
+                        <div className="overflow-x-auto border rounded-md">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -326,6 +326,8 @@ export function CustomerBookingsDialog({ open, onOpenChange, customerId, custome
                                 </TableBody>
                             </Table>
                         </div>
+
+                        {/* Pagination */}
                         {totalPages > 1 && (
                             <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse py-4">
                                 <Button
